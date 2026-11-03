@@ -1102,6 +1102,8 @@ html.bigtext body{zoom:1.1}
 .gm7ov{position:absolute;left:12px;right:60px;bottom:12px;z-index:500;display:flex;align-items:center;gap:8px;background:rgba(20,30,46,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:9px 12px;border-radius:12px;font-size:12.5px;color:#c3cedb;font-weight:600}
 .gm7s{position:absolute;left:10px;top:10px;z-index:500;display:flex;gap:2px;padding:3px;border-radius:11px;background:rgba(20,30,46,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}.gm7s button{border:0;background:none;color:#c3cedb;font:700 12px Manrope,-apple-system,sans-serif;padding:6px 10px;border-radius:8px;cursor:pointer}.gm7s button.on{background:#d1925f;color:#1e2a3b}
 .gm7.lt #gmap{background:#e8e4dc}
+.gm7.dk .leaflet-tile-pane{filter:invert(.93) hue-rotate(190deg) saturate(.5) brightness(1.15) contrast(.92)}
+.gm7.dk #gmap{background:#1d2738}
 </style>
 </head>
 <body>
@@ -1195,11 +1197,11 @@ const DEF={receipts:{warranty:'2 ans (garantie légale)'},recur:{kind:'Dépense'
 const COLLS=['tasks','events','money','shop','mealIdeas','ideas','portfolio','fuel','carCosts','carDue','journal','gasFav','recur','receipts'];
 
 /* ===== Données (vides au départ) ===== */
-const S={tasks:[],events:[],money:[],shop:[],mealIdeas:[],plan:{},prefs:{mapStyle:'dark',gasAlert:'',regime:'Aucun',allergies:'',aime:'',evite:'',budget:'',name:'',splash:'on',anim:'on',text:'normal',wDays:45,exportEvery:14,lastExport:0},ideas:[],portfolio:[],fuel:[],carCosts:[],carDue:[],journal:[],car:{name:''},gasFav:[],recur:[],catBud:{},receipts:[],
+const S={tasks:[],events:[],money:[],shop:[],mealIdeas:[],plan:{},prefs:{mapStyle:'plan',gasAlert:'',regime:'Aucun',allergies:'',aime:'',evite:'',budget:'',name:'',splash:'on',anim:'on',text:'normal',wDays:45,exportEvery:14,lastExport:0},ideas:[],portfolio:[],fuel:[],carCosts:[],carDue:[],journal:[],car:{name:''},gasFav:[],recur:[],catBud:{},receipts:[],
  dash:{tasks:true,events:true,meals:true,budget:true,projects:true,shop:true,shortcuts:true,car:true,gas:true}};
 
 /* ===== État de l'interface ===== */
-const APPV=21;
+const APPV=22;
 const UIF=(()=>{try{return JSON.parse(localStorage.getItem('minoa.ui')||'{}')}catch(e){return {}}})();
 (()=>{const r=document.documentElement;if(UIF.noanim)r.classList.add('noanim');if(UIF.big)r.classList.add('bigtext')})();
 const U={splash:!UIF.nosplash,tab:'home',orgSeg:'tasks',taskF:'Toutes',calM:ym,calSel:'',moneyM:ym,mealSeg:'week',weekOff:0,ideaF:'Tous',pfF:'Toutes',carSeg:'fuel',carM:ym,opF:'Tout',mealDay:'',carImg:0,jq:'',jT:'Tous'};
@@ -1786,10 +1788,13 @@ async function initGasMap(){const el=$('#gmap');if(!el)return;
  if(!$('#gmap')||el.dataset.on)return;el.dataset.on=1;if(G.map){try{G.map.remove()}catch(e){}}
  const R=G.status==='ok'?gasSorted().filter(x=>x.lat!=null):[],bp=bestPick(),a=+S.prefs.gasAlert,fl=FUELS.find(x=>x[0]===G.fuel)[1];
  const m=L.map(el,{zoomControl:false,attributionControl:true,tap:true});G.map=m;
- const MS={dark:['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png','© OpenStreetMap · © CARTO',19],plan:['https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png','© OpenStreetMap · © CARTO',19],sat:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagerie © Esri, Maxar, Earthstar',19]},ms=MS[S.prefs.mapStyle]||MS.dark;
- L.tileLayer(ms[0],{maxZoom:ms[2],subdomains:'abcd',attribution:ms[1]}).addTo(m);
- if(S.prefs.mapStyle==='sat')L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',pane:'overlayPane'}).addTo(m);
- el.parentNode.classList.toggle('lt',S.prefs.mapStyle!=='dark');
+ /* Fonds de carte gratuits et sans clé : OpenStreetMap (plan, et version sombre par filtre) et Esri (satellite) */
+ const OSM=['https://tile.openstreetmap.org/{z}/{x}/{y}.png','© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',19],
+  MS={dark:OSM,plan:OSM,sat:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagerie © Esri, Maxar, Earthstar Geographics',19]},st=MS[S.prefs.mapStyle]?S.prefs.mapStyle:'dark',ms=MS[st];
+ L.tileLayer(ms[0],{maxZoom:ms[2],attribution:ms[1]}).addTo(m);
+ if(st==='sat'){const E='https://server.arcgisonline.com/ArcGIS/rest/services/Reference/';L.tileLayer(E+'World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,pane:'overlayPane'}).addTo(m);L.tileLayer(E+'World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,pane:'overlayPane'}).addTo(m)}
+ el.parentNode.classList.toggle('dk',st==='dark');
+ el.parentNode.classList.toggle('lt',st!=='dark');
  const pts=[];
  R.forEach(s=>{const best=bp&&bp.s.id===s.id,al=a>0&&s.price<=a;const ic_=L.divIcon({className:'',html:`<div class="pm7 ${best?'best':''} ${al?'al':''}"><b>${pf(s.price)}</b>${best?'<i>★</i>':''}</div>`,iconSize:[0,0],iconAnchor:[0,0]});
   const dest=`${s.lat},${s.lon}`;const mk=L.marker([s.lat,s.lon],{icon:ic_,zIndexOffset:best?1000:al?500:0}).addTo(m);
