@@ -1083,6 +1083,22 @@ html.bigtext body{zoom:1.1}
 .ga7{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px 10px;background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:10px 14px;margin:0 0 12px}.ga7>span{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;color:#eef3f8}.ga7>span svg{color:#e9b98f}
 .ga7i{display:flex;align-items:center;justify-content:flex-end;gap:6px}.ga7i input{width:84px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#eef3f8;font:700 15px Manrope,-apple-system,sans-serif;padding:7px 9px;text-align:right}.ga7i em{font-style:normal;color:#a3b2c4;font-size:13px}
 .ga7 small{grid-column:1/-1;font-size:11.5px;color:#8d9bb0}
+
+.gm7{position:relative;isolation:isolate;z-index:0;height:280px;border-radius:20px;overflow:hidden;margin:0 0 12px;border:1px solid rgba(255,255,255,.1);background:#1b2433;box-shadow:0 14px 30px -18px rgba(0,0,0,.7)}.gm7.big{height:62vh}
+#gmap{position:absolute;inset:0;background:#1b2433}
+.gm7b{position:absolute;right:10px;top:10px;z-index:500;display:grid;gap:6px}.gm7b .gbtn{background:rgba(20,30,46,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.gm7leg{position:absolute;left:10px;bottom:10px;z-index:500;display:flex;gap:10px;background:rgba(20,30,46,.82);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:5px 10px;border-radius:10px;font-size:11px;color:#c3cedb;font-weight:700}.gm7leg span{display:flex;align-items:center;gap:5px}.gm7leg i{width:9px;height:9px;border-radius:50%;display:inline-block}.lg-b{background:#d1925f}.lg-a{background:#5fb3a8}.lg-me{background:#4f9bff;box-shadow:0 0 0 2px rgba(79,155,255,.35)}
+.gm7err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:20px;text-align:center;font-size:13px;color:#a3b2c4}
+.pm7{position:absolute;left:0;bottom:7px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:#2f3d52;color:#eef3f8;border:1.5px solid rgba(255,255,255,.25);border-radius:999px;padding:4px 9px;font:800 12.5px Manrope,-apple-system,sans-serif;box-shadow:0 6px 14px -4px rgba(0,0,0,.6)}
+.pm7::after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border:6px solid transparent;border-bottom:0;border-top-color:inherit;border-top:6px solid #2f3d52}
+.pm7.al{background:#1f4d48;border-color:#5fb3a8}.pm7.al::after{border-top-color:#1f4d48}
+.pm7.best{background:linear-gradient(135deg,#f3c79c,#d1925f);color:#1e2a3b;border-color:#f6d7b4;font-size:14px;padding:5px 11px;z-index:2}.pm7.best::after{border-top-color:#d1925f}.pm7 i{font-style:normal;font-size:11px}
+.me7{width:22px;height:22px;border-radius:50%;background:rgba(79,155,255,.25);display:grid;place-items:center;animation:me7 2s ease-out infinite}.me7 i{width:12px;height:12px;border-radius:50%;background:#4f9bff;border:2px solid #fff}
+@keyframes me7{0%{box-shadow:0 0 0 0 rgba(79,155,255,.5)}100%{box-shadow:0 0 0 16px rgba(79,155,255,0)}}
+.pp7w .leaflet-popup-content-wrapper{background:#253347;color:#eef3f8;border-radius:14px;box-shadow:0 12px 30px -10px rgba(0,0,0,.7)}.pp7w .leaflet-popup-tip{background:#253347}.pp7w .leaflet-popup-content{margin:12px 14px}
+.pp7{display:grid;gap:4px;min-width:190px;font:13px Manrope,-apple-system,sans-serif}.pp7 b{font-size:17px;font-weight:800}.pp7 b small{font-size:11px;color:#a3b2c4}.pp7 span{color:#c3cedb;line-height:1.35}.pp7 em{font-style:normal;font-size:12px;color:#a3b2c4}.pp7 em.g{color:#8fd3c8;font-weight:800}.pp7 em.l{color:#f08c80}
+.pp7a{display:flex;gap:6px;margin-top:6px}.pp7a a{flex:1;text-align:center;background:#d1925f;color:#1e2a3b!important;text-decoration:none;font-weight:800;border-radius:9px;padding:7px 0}.pp7a a+a{background:#34465f;color:#eef3f8!important}
+.leaflet-container{font-family:Manrope,-apple-system,sans-serif}.leaflet-control-attribution{background:rgba(20,30,46,.7)!important;color:#8d9bb0!important;font-size:9px!important}.leaflet-control-attribution a{color:#a3b2c4!important}
 </style>
 </head>
 <body>
@@ -1619,7 +1635,8 @@ gas(){if(S.car&&S.car.fuelType&&!G.touched)G.fuel=S.car.fuelType;setTimeout(()=>
    else{const bst=R.filter(x=>x.det&&!x.isNear).sort((a,b)=>b.det.net-a.det.net)[0];b+=`<div class="det7 ${bst&&bst.det.net>=.05?'win':''}">${ic('gauge',18)}<div class="grow">${bst&&bst.det.net>=.05?`<b>Meilleur choix : ${esc(bst.adresse||'station')}${bst.ville?' · '+esc(bst.ville):''}</b><span>Tu gagnes <em>${eur(bst.det.net)}</em> par rapport à la plus proche, détour compris (+${Math.round(bst.det.km*10)/10} km).</span>`:`<b>La plus proche reste le meilleur choix</b><span>Aucun détour ne rapporte plus que l’essence qu’il coûte.</span>`}<small>Conso ${d.cc.v.toFixed(1).replace('.',',')} L/100 (${d.cc.src}) · ${d.fl.L} L ${d.fl.src} · distances à vol d’oiseau × 1,3 : c’est une estimation.</small></div></div>`}}
   b+=`<div class="resbar"><div class="grow">${R.length} station${R.length>1?'s':''} · ${fl} · ${G.loc.lat==null?esc(G.loc.label):G.radius+' km'}<br>Chargé à ${G.fetchedAt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div><button class="mini" data-a="gasrefresh" style="background:#39465b;color:#e9b98f">${ic('clock',16)}Actualiser</button></div>`;
   if(!R.length)b+=`<div class="alert">${ic('search',14)} Aucune station ne déclare de prix pour le <b>${fl}</b> ${G.loc.lat==null?'dans cette zone':`à moins de ${G.radius} km`}. Essaie un rayon plus grand ou un autre carburant.</div>`;
-  else{b+=`<p class="sub" style="margin:0 2px 10px;font-size:12px;color:#8d9bb0">Les données officielles ne donnent pas le nom commercial des stations : elles sont identifiées par leur adresse.</p>`;
+  else{if(R.some(x=>x.lat!=null)){b+=`<div class="gm7 ${G.mapBig?'big':''}"><div id="gmap"></div><div class="gm7b"><button class="gbtn" data-a="mapbig" aria-label="${G.mapBig?'Réduire':'Agrandir'} la carte">${ic(G.mapBig?'down':'up',16)}</button>${G.loc&&G.loc.mode==='gps'?`<button class="gbtn" data-a="mapme" aria-label="Recentrer sur moi">${ic('flag',16)}</button>`:''}</div><div class="gm7leg"><span><i class="lg-b"></i>Meilleur choix</span>${+S.prefs.gasAlert>0?'<span><i class="lg-a"></i>Sous ton alerte</span>':''}${G.loc&&G.loc.mode==='gps'?'<span><i class="lg-me"></i>Toi</span>':''}</div></div>`;setTimeout(initGasMap,0)}
+   b+=`<p class="sub" style="margin:0 2px 10px;font-size:12px;color:#8d9bb0">Les données officielles ne donnent pas le nom commercial des stations : elles sont identifiées par leur adresse.</p>`;
    b+=R.map(s=>stRow(s,false)).join('')}
  }
  b+=`<div class="csec" style="margin-top:22px"><h2>${ic('star',16).replace('class="i"','class="i" style="color:#e9b98f"')}Mes stations favorites${favs.length?`<span class="cnt">${favs.length}</span>`:''}</h2>${favs.length?`<button class="cadd" data-a="favrefresh">${ic('clock',14)}Actualiser</button>`:''}</div>`;
@@ -1682,7 +1699,7 @@ async function gasFetch(){if(!G.loc)return;
  else where=`search(ville, "${G.loc.label.replace(/"/g,'')}") and `+where;
  const url=API+'?'+new URLSearchParams({where,order_by:`${f}_prix asc`,limit:'100'});
  try{const r=await fetchT(url);if(!r.ok)throw new Error('réponse du serveur '+r.status);const j=await r.json();
-  G.results=(j.results||[]).map(x=>norm(x)).filter(Boolean);G.status='ok';G.fetchedAt=new Date();if(G.loc.lat==null)G.sort='price';
+  G.results=(j.results||[]).map(x=>norm(x)).filter(Boolean);G.status='ok';if(G.lastFuelMap!==G.fuel+G.radius+(G.loc&&G.loc.label)){G.mapView=null;G.lastFuelMap=G.fuel+G.radius+(G.loc&&G.loc.label)}G.fetchedAt=new Date();if(G.loc.lat==null)G.sort='price';
   let ch=false;G.results.forEach(s=>{const fv=(S.gasFav||[]).find(x=>x.id===s.id);if(fv){Object.assign(fv,snap(s));ch=true}});if(ch)scheduleSave()}
  catch(e){G.status=navigator.onLine===false?'offline':'error';G.results=[];G.err=e.name==='AbortError'?'délai de réponse dépassé':'connexion refusée ou bloquée'}
  if(U.tab==='gas'||U.tab==='home')render();gasAlertCheck()}
@@ -1754,6 +1771,24 @@ function gasHomeCard(){const fl=FUELS.find(x=>x[0]===G.fuel)[1],a=+S.prefs.gasAl
  const s=bp.s,hit=a>0&&s.price<=a,age=G.fetchedAt?Math.max(0,Math.round((Date.now()-G.fetchedAt)/60e3)):0;
  return `<section class="c7 gh7 ${hit?'hit':''}" data-a="tab:gas">${head}<div class="gh7m"><div><b class="gh7p">${pf(s.price)}<small> €/L</small></b><span class="gh7a">${esc(s.adresse||'Station')}${s.ville?' · '+esc(s.ville):''}</span></div><div class="gh7d">${s.dist!=null?`<b>${s.dist<10?s.dist.toFixed(1).replace('.',','):Math.round(s.dist)} km</b>`:''}${bp.mode==='gain'&&s.det&&!s.isNear&&s.det.net>=.05?`<span class="pos">+${eur(s.det.net)} gagnés</span>`:s.isNear?'<span>la plus proche</span>':'<span>le moins cher</span>'}</div></div>
  <div class="gh7s">${hit?`<span class="gh7alert">${ic('bell',12)}Sous ton alerte de ${pf(a)} €</span>`:''}<span>${G.results.length} stations analysées · prix chargés ${age<1?'à l’instant':`il y a ${age} min`}</span></div></section>`}
+/* ===== Carte des stations (Leaflet + OpenStreetMap, chargée seulement quand elle s’affiche) ===== */
+let LEAF=null;
+function loadLeaflet(){if(window.L)return Promise.resolve();if(LEAF)return LEAF;LEAF=new Promise((ok,ko)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.appendChild(c);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';sc.onload=()=>ok();sc.onerror=()=>{LEAF=null;ko()};document.head.appendChild(sc)});return LEAF}
+async function initGasMap(){const el=$('#gmap');if(!el)return;
+ try{await loadLeaflet()}catch(e){el.innerHTML=`<div class="gm7err">${ic('info',16)}Carte indisponible (pas de connexion). La liste ci-dessous reste à jour.</div>`;return}
+ if(!$('#gmap')||el.dataset.on)return;el.dataset.on=1;if(G.map){try{G.map.remove()}catch(e){}}
+ const R=gasSorted().filter(x=>x.lat!=null),bp=bestPick(),a=+S.prefs.gasAlert,fl=FUELS.find(x=>x[0]===G.fuel)[1];
+ const m=L.map(el,{zoomControl:false,attributionControl:true,tap:true});G.map=m;
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap · © CARTO'}).addTo(m);
+ const pts=[];
+ R.forEach(s=>{const best=bp&&bp.s.id===s.id,al=a>0&&s.price<=a;const ic_=L.divIcon({className:'',html:`<div class="pm7 ${best?'best':''} ${al?'al':''}"><b>${pf(s.price)}</b>${best?'<i>★</i>':''}</div>`,iconSize:[0,0],iconAnchor:[0,0]});
+  const dest=`${s.lat},${s.lon}`;const mk=L.marker([s.lat,s.lon],{icon:ic_,zIndexOffset:best?1000:al?500:0}).addTo(m);
+  mk.bindPopup(`<div class="pp7"><b>${pf(s.price)} €/L <small>${fl}</small></b><span>${esc(s.adresse||'Station')}${s.ville?'<br>'+esc(s.cp+' '+s.ville):''}</span>${s.dist!=null?`<em>${s.dist<10?s.dist.toFixed(1).replace('.',','):Math.round(s.dist)} km à vol d’oiseau</em>`:''}${s.det&&!s.isNear?`<em class="${s.det.net>=.05?'g':'l'}">${s.det.net>=.05?'Détour rentable : +'+eur(s.det.net):'Détour pas rentable'}</em>`:''}<div class="pp7a"><a href="https://maps.apple.com/?daddr=${dest}&dirflg=d" target="_blank" rel="noopener">Plans</a><a href="https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving" target="_blank" rel="noopener">Google Maps</a></div></div>`,{closeButton:false,offset:[0,-32],className:'pp7w'});
+  pts.push([s.lat,s.lon])});
+ if(G.loc&&G.loc.lat!=null){if(G.loc.mode==='gps')L.marker([G.loc.lat,G.loc.lon],{icon:L.divIcon({className:'',html:'<div class="me7"><i></i></div>',iconSize:[22,22],iconAnchor:[11,11]}),zIndexOffset:2000}).addTo(m);pts.push([G.loc.lat,G.loc.lon])}
+ if(G.mapView)m.setView(G.mapView.c,G.mapView.z);else if(pts.length)m.fitBounds(pts,{padding:[34,34],maxZoom:15});
+ m.on('moveend',()=>{G.mapView={c:m.getCenter(),z:m.getZoom()}});
+ if(bp&&!G.mapView)setTimeout(()=>{},0)}
 function locate(){if(!navigator.geolocation){G.status='nogeo';return render()}
  G.status='locating';render();
  navigator.geolocation.getCurrentPosition(p=>{G.loc={lat:p.coords.latitude,lon:p.coords.longitude,label:'Autour de moi',mode:'gps'};gasFetch()},
@@ -2009,7 +2044,9 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
   case 'gassort':G.sort=p1;break;
   case 'locate':locate();return;
   case 'gasrefresh':gasFetch();return;
-  case 'gaschange':G.loc=null;G.status='idle';G.results=[];break;
+  case 'mapbig':G.mapBig=!G.mapBig;render();return;
+  case 'mapme':if(G.map&&G.loc&&G.loc.lat!=null){G.map.setView([G.loc.lat,G.loc.lon],14)}return;
+  case 'gaschange':G.mapView=null;G.loc=null;G.status='idle';G.results=[];break;
   case 'wipe':confirmWipe();return;
   case 'wipeok':COLLS.forEach(k=>S[k]=[]);S.plan={};S.car={name:''};S.prefs={regime:'Aucun',allergies:'',aime:'',evite:'',budget:''};S.dash=JSON.parse(JSON.stringify(DEFAULTS.dash));closeSheet();toast('Tout est effacé');break;
   case 'export':closeSheet();exportData();return;
