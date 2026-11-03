@@ -1296,7 +1296,7 @@ gas(){if(S.car&&S.car.fuelType&&!G.touched)G.fuel=S.car.fuelType;const fl=FUELS.
   <a class="alt2" href="https://maps.apple.com/?q=${encodeURIComponent('Station essence')}${near?'&sll='+near:'&near='+encodeURIComponent(G.loc?(G.loc.cp||G.loc.label):'')}" target="_blank" rel="noopener">${ic('car',16)}Stations dans Plans</a>
   <a class="alt2" href="https://www.google.com/maps/search/${near?'station+essence/@'+near+',14z':zone}" target="_blank" rel="noopener">${ic('flag',16)}Google Maps</a></div>
   ${inClaude?'':`<button class="btn" style="margin-top:10px;width:100%" data-a="gasrefresh">${ic('clock',18)}Réessayer</button>`}
-  ${inClaude?`<p class="sub" style="margin:10px 2px 0;font-size:12px;color:#8d9bb0">La recherche intégrée fonctionnera dans la version publiée sur ton propre site (Netlify).</p>`:''}`}
+  ${inClaude?`<p class="sub" style="margin:10px 2px 0;font-size:12px;color:#8d9bb0">La recherche intégrée fonctionne dans la version installée depuis serguei2025.github.io/minoa.</p>`:''}`}
  if(G.status==='ok'){const R=gasSorted();
   b+=seg2([['price','Prix le plus bas'],['dist','Le plus proche']]);
   b+=`<div class="resbar"><div class="grow">${R.length} station${R.length>1?'s':''} · ${fl} · ${G.loc.lat==null?esc(G.loc.label):G.radius+' km'}<br>Chargé à ${G.fetchedAt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div><button class="mini" data-a="gasrefresh" style="background:#243041;color:#e9b98f">${ic('clock',16)}Actualiser</button></div>`;
