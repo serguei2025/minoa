@@ -4,7 +4,7 @@
    - Les recherches de stations, d'adresses et les cartes (sites extérieurs) ne sont JAMAIS mises en cache :
      elles ont besoin d'Internet et l'application affiche un message clair hors ligne.
    - Tes données ne sont pas ici : elles restent dans la base locale de l'appareil (IndexedDB). */
-const VERSION = 'minoa-v10';
+const VERSION = 'minoa-v11';
 const CORE = [
   './',
   './index.html',
