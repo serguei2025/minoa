@@ -1072,6 +1072,17 @@ html.bigtext body{zoom:1.1}
 .sr7in{width:130px;flex:none;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#eef3f8;font:600 14px Manrope,-apple-system,sans-serif;padding:8px 10px;text-align:right}
 .sr7sel{flex:none;max-width:150px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#eef3f8;font:600 13px Manrope,-apple-system,sans-serif;padding:7px 8px}
 .exr{border-color:rgba(233,185,143,.45);margin-top:16px}
+
+.gh7{cursor:pointer}.gh7h{display:flex;align-items:center;gap:10px;margin-bottom:10px}.gh7h b{flex:1;font:800 16px Manrope,-apple-system,sans-serif;color:#eef3f8}.gh7f{font:800 11px Manrope,-apple-system,sans-serif;color:#e9b98f;background:rgba(209,146,95,.14);padding:4px 8px;border-radius:8px}
+.gh7m{display:flex;justify-content:space-between;align-items:flex-end;gap:10px}.gh7p{display:block;font:800 30px Manrope,-apple-system,sans-serif;letter-spacing:-.02em;color:#eef3f8}.gh7p small{font-size:13px;color:#a3b2c4;font-weight:700}
+.gh7a{display:block;font-size:13px;color:#c3cedb;margin-top:2px}.gh7d{text-align:right;flex:none}.gh7d b{display:block;font:800 17px Manrope,-apple-system,sans-serif;color:#eef3f8}.gh7d span{font-size:12px;color:#a3b2c4}.gh7d .pos{color:#8fd3c8;font-weight:800}
+.gh7s{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.07);font-size:11.5px;color:#8d9bb0}
+.gh7alert{display:inline-flex;align-items:center;gap:4px;color:#8fd3c8;font-weight:800;background:rgba(95,179,168,.16);padding:3px 8px;border-radius:7px}
+.gh7.hit{border-color:rgba(95,179,168,.5)!important;background:linear-gradient(150deg,rgba(95,179,168,.15),var(--card) 55%)!important}
+.gh7l{display:flex;align-items:center;gap:10px;font-size:13px;color:#a3b2c4;padding:6px 0}
+.ga7{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:6px 10px;background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:10px 14px;margin:0 0 12px}.ga7>span{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;color:#eef3f8}.ga7>span svg{color:#e9b98f}
+.ga7i{display:flex;align-items:center;justify-content:flex-end;gap:6px}.ga7i input{width:84px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#eef3f8;font:700 15px Manrope,-apple-system,sans-serif;padding:7px 9px;text-align:right}.ga7i em{font-style:normal;color:#a3b2c4;font-size:13px}
+.ga7 small{grid-column:1/-1;font-size:11.5px;color:#8d9bb0}
 </style>
 </head>
 <body>
@@ -1165,8 +1176,8 @@ const DEF={receipts:{warranty:'2 ans (garantie légale)'},recur:{kind:'Dépense'
 const COLLS=['tasks','events','money','shop','mealIdeas','ideas','portfolio','fuel','carCosts','carDue','journal','gasFav','recur','receipts'];
 
 /* ===== Données (vides au départ) ===== */
-const S={tasks:[],events:[],money:[],shop:[],mealIdeas:[],plan:{},prefs:{regime:'Aucun',allergies:'',aime:'',evite:'',budget:'',name:'',splash:'on',anim:'on',text:'normal',wDays:45,exportEvery:14,lastExport:0},ideas:[],portfolio:[],fuel:[],carCosts:[],carDue:[],journal:[],car:{name:''},gasFav:[],recur:[],catBud:{},receipts:[],
- dash:{tasks:true,events:true,meals:true,budget:true,projects:true,shop:true,shortcuts:true,car:true}};
+const S={tasks:[],events:[],money:[],shop:[],mealIdeas:[],plan:{},prefs:{gasAlert:'',regime:'Aucun',allergies:'',aime:'',evite:'',budget:'',name:'',splash:'on',anim:'on',text:'normal',wDays:45,exportEvery:14,lastExport:0},ideas:[],portfolio:[],fuel:[],carCosts:[],carDue:[],journal:[],car:{name:''},gasFav:[],recur:[],catBud:{},receipts:[],
+ dash:{tasks:true,events:true,meals:true,budget:true,projects:true,shop:true,shortcuts:true,car:true,gas:true}};
 
 /* ===== État de l'interface ===== */
 const UIF=(()=>{try{return JSON.parse(localStorage.getItem('minoa.ui')||'{}')}catch(e){return {}}})();
@@ -1334,6 +1345,7 @@ home(){const d=S.dash,h=new Date().getHours(),c=S.car,mt=monthTotals(ym),up=upco
   const mdl=String(c.model||'').trim(),pr=mdl.split(/\s+/),sub=[pr.length>1?pr.slice(1).join(' '):mdl,c.plate].filter(Boolean).map(esc).join(' · ');
   const chip=(l,v,a)=>`<button class="vc7c ${v?'':'inv'}" data-a="${a}"><span>${l}</span><b>${v||'+ Ajouter'}</b></button>`;
   b+=`<section class="vc7" data-a="tab:car"><div class="vc7t"><div style="min-width:0"><span class="k7">Mon véhicule</span><b>${esc(c.name||mdl||'Ma voiture')}</b><small>${sub||'Fiche à compléter'}</small></div><button class="pen7" data-a="carinfo" aria-label="Modifier la fiche du véhicule">${ic('pen',16)}</button></div><img src="${CAR_IMG}" alt="Ma voiture"><div class="vc7g">${chip('Kilométrage',km?num(km)+' km':'','carinfo')}${chip('Carburant',hasF?(+c.fuel)+' %':'','carinfo')}${chip('Conso. moy.',conso,'add:fuel')}</div></section>`}
+ if(d.gas!==false){b+=gasHomeCard();setTimeout(()=>autoGas(),400)}
  if(d.tasks)b+=`<section class="c7"><div class="c7h"><span class="c7i">${ic('check',18)}</span><b>À faire aujourd’hui</b>${list.length?`<span class="n7">${openN} tâche${openN>1?'s':''}</span>`:''}</div>${list.length?list.slice(0,5).map(t=>{const dn=t.status==='Terminé';return `<div class="r7 ${dn?'dn':''}" data-a="edit:tasks:${t.id}"><button class="cb7 ${dn?'on':''}" data-a="tt:${t.id}" aria-label="${dn?'Remettre à faire':'Marquer comme terminée'}">${ic('tick',14)}</button><span class="grow">${esc(t.title)}${t.date<today?' <em>en retard</em>':''}</span>${ic('right',16)}</div>`}).join('')+(list.length>5?`<button class="more7" data-a="go:org:tasks">Voir les ${list.length} tâches ›</button>`:''):`<div class="e7"><span>Rien de prévu pour aujourd’hui.</span><button class="emp-b" data-a="add:tasks">${ic('plus',14)}Ajouter</button></div>`}</section>`;
  if(d.budget||d.meals){b+=`<div class="two7">`;
   if(d.budget){const ref=+S.prefs.monthBudget||0,base=ref||mt.inc,pc=base?Math.round(mt.out/base*100):0;
@@ -1578,7 +1590,7 @@ car(){const c=S.car,kmItems=[...S.fuel,...S.carCosts].filter(x=>+x.km);
  }
  return {title:'Voiture',sub:back,body:b}},
 
-gas(){if(S.car&&S.car.fuelType&&!G.touched)G.fuel=S.car.fuelType;const fl=FUELS.find(x=>x[0]===G.fuel)[1],carF=S.car&&S.car.fuelType,favs=S.gasFav||[];
+gas(){if(S.car&&S.car.fuelType&&!G.touched)G.fuel=S.car.fuelType;setTimeout(()=>autoGas(),200);const fl=FUELS.find(x=>x[0]===G.fuel)[1],carF=S.car&&S.car.fuelType,favs=S.gasFav||[];
  let b=`<div class="ctl"><div class="lbl">Carburant${carF?`<b style="font-size:11.5px;color:#8d9bb0;font-weight:600">${carF===G.fuel?'Celui de ma voiture':`Ma voiture : ${FUELS.find(x=>x[0]===carF)[1]}`}</b>`:''}</div><div class="fuels">${FUELS.map(([k,l])=>`<button class="${G.fuel===k?'on':''}" data-a="gasfuel:${k}">${l}${k===carF?' ★':''}</button>`).join('')}</div>${carF?'':`<button class="link" data-a="carinfo" style="color:#e9b98f;font-size:12.5px;padding:8px 0 0">Choisir le carburant de ma voiture dans sa fiche ›</button>`}</div>`;
  b+=`<div class="ctl"><div class="lbl">Rayon de recherche <b id="radv">${G.radius} km</b></div><input type="range" min="1" max="30" step="1" value="${G.radius}" data-radius="1" style="--p:${(G.radius-1)/29*100}%" aria-label="Rayon de recherche en kilomètres"></div>`;
  if(G.loc){b+=`<div class="ctl"><div class="here"><div class="ib">${ic(G.loc.mode==='gps'?'flag':'search')}</div><div class="grow"><b>${esc(G.loc.label)}</b><span>${G.loc.mode==='gps'?'Position partagée pour cette recherche':G.loc.lat==null?'Zone saisie (centre non localisé)':'Lieu saisi'}</span></div><button class="link" data-a="gaschange" style="color:#d1925f">Changer</button></div></div>`}
@@ -1601,6 +1613,7 @@ gas(){if(S.car&&S.car.fuelType&&!G.touched)G.fuel=S.car.fuelType;const fl=FUELS.
   ${inClaude?'':`<button class="btn" style="margin-top:10px;width:100%" data-a="gasrefresh">${ic('clock',18)}Réessayer</button>`}
   ${inClaude?`<p class="sub" style="margin:10px 2px 0;font-size:12px;color:#8d9bb0">La recherche intégrée fonctionne dans la version installée depuis serguei2025.github.io/minoa.</p>`:''}`}
  if(G.status==='ok'){const R=gasSorted();
+  b+=`<div class="ga7"><span>${ic('bell',15)}Alerte prix</span><div class="ga7i"><input inputmode="decimal" data-gasalert="1" placeholder="ex. 1,75" value="${+S.prefs.gasAlert>0?pf(+S.prefs.gasAlert):''}"><em>€/L</em></div><small>Mise à jour auto : à l’ouverture et toutes les 5 min</small></div>`;
   b+=seg2([['price','Moins cher'],['dist','Plus proche'],...(G.loc.lat!=null&&carConso()?[['gain','Plus rentable']]:[])]);
   if(R.length&&G.loc.lat!=null){const d=G.detInfo;if(!d)b+=`<button class="det7 none" data-a="carinfo">${ic('gauge',18)}<div class="grow"><b>Le détour vaut-il le coup ?</b><span>Indique la consommation de ta voiture dans sa fiche : Minoa calculera si une station plus loin te fait vraiment gagner de l’argent.</span></div>${ic('right',16)}</button>`;
    else{const bst=R.filter(x=>x.det&&!x.isNear).sort((a,b)=>b.det.net-a.det.net)[0];b+=`<div class="det7 ${bst&&bst.det.net>=.05?'win':''}">${ic('gauge',18)}<div class="grow">${bst&&bst.det.net>=.05?`<b>Meilleur choix : ${esc(bst.adresse||'station')}${bst.ville?' · '+esc(bst.ville):''}</b><span>Tu gagnes <em>${eur(bst.det.net)}</em> par rapport à la plus proche, détour compris (+${Math.round(bst.det.km*10)/10} km).</span>`:`<b>La plus proche reste le meilleur choix</b><span>Aucun détour ne rapporte plus que l’essence qu’il coûte.</span>`}<small>Conso ${d.cc.v.toFixed(1).replace('.',',')} L/100 (${d.cc.src}) · ${d.fl.L} L ${d.fl.src} · distances à vol d’oiseau × 1,3 : c’est une estimation.</small></div></div>`}}
@@ -1662,7 +1675,7 @@ function norm(s,any){const all=FUELS.map(([k,l])=>({k,l,price:pr3(s[k+'_prix']),
  return {id:String(s.id),price:cur?cur.price:null,maj:cur?cur.maj:null,fuels:all,rupture:ind.includes(DSF[G.fuel]),adresse:s.adresse||'',ville:s.ville||'',cp:s.cp||'',pop:s.pop||'',h24:/oui/i.test(String(s.horaires_automate_24_24||'')),lat:c?c.lat:null,lon:c?c.lon:null,dist:c&&G.loc&&G.loc.lat!=null?hav(G.loc.lat,G.loc.lon,c.lat,c.lon):null}}
 async function gasFetch(){if(!G.loc)return;
  if(navigator.onLine===false){G.status='offline';G.results=[];return U.tab==='gas'&&render()}
- G.status='loading';if(U.tab==='gas')render();
+ G.status='loading';if(U.tab==='gas'||U.tab==='home')render();
  const f=G.fuel;let where=`${f}_prix is not null`;
  if(G.loc.lat!=null)where=`within_distance(geom, geom'POINT(${G.loc.lon} ${G.loc.lat})', ${G.radius}km) and `+where;
  else if(G.loc.cp)where=`cp="${G.loc.cp}" and `+where;
@@ -1672,19 +1685,19 @@ async function gasFetch(){if(!G.loc)return;
   G.results=(j.results||[]).map(x=>norm(x)).filter(Boolean);G.status='ok';G.fetchedAt=new Date();if(G.loc.lat==null)G.sort='price';
   let ch=false;G.results.forEach(s=>{const fv=(S.gasFav||[]).find(x=>x.id===s.id);if(fv){Object.assign(fv,snap(s));ch=true}});if(ch)scheduleSave()}
  catch(e){G.status=navigator.onLine===false?'offline':'error';G.results=[];G.err=e.name==='AbortError'?'délai de réponse dépassé':'connexion refusée ou bloquée'}
- if(U.tab==='gas')render()}
+ if(U.tab==='gas'||U.tab==='home')render();gasAlertCheck()}
 const snap=s=>({id:s.id,adresse:s.adresse,ville:s.ville,cp:s.cp,lat:s.lat,lon:s.lon,pop:s.pop,h24:s.h24,fuels:s.fuels.map(x=>({k:x.k,l:x.l,price:x.price,maj:x.maj})),checkedAt:Date.now()});
 function favView(f){const cur=(f.fuels||[]).find(x=>x.k===G.fuel);const live=G.status==='ok'&&G.results.find(x=>x.id===f.id);
  return {...f,price:cur?cur.price:null,maj:cur?cur.maj:null,dist:live?live.dist:(f.lat!=null&&G.loc&&G.loc.lat!=null?hav(G.loc.lat,G.loc.lon,f.lat,f.lon):null),best:false,top:false,isNear:false,vsNear:null,diff:0,fav:true}}
 function toggleFav(id){S.gasFav=S.gasFav||[];const i=S.gasFav.findIndex(x=>x.id===id);
  if(i>=0){S.gasFav.splice(i,1);toast('Retirée des favoris');return}
  const s=G.results.find(x=>x.id===id);if(!s)return;S.gasFav.unshift({...snap(s),savedAt:Date.now()});toast('Ajoutée aux favoris')}
-async function favRefresh(){const favs=S.gasFav||[];if(!favs.length)return;
+async function favRefresh(silent){const favs=S.gasFav||[];if(!favs.length)return;
  if(navigator.onLine===false){G.favStatus='error';G.favErr='pas de connexion Internet';return render()}
  G.favStatus='loading';render();
  const where=favs.map(f=>`id=${/^\d+$/.test(f.id)?f.id:'"'+f.id.replace(/"/g,'')+'"'}`).join(' or ');
  try{const r=await fetchT(API+'?'+new URLSearchParams({where,limit:'100'}));if(!r.ok)throw new Error('réponse du serveur '+r.status);const j=await r.json();
-  (j.results||[]).forEach(x=>{const s=norm(x,true),fv=favs.find(f=>f.id===s.id);if(fv)Object.assign(fv,snap(s))});G.favStatus='';scheduleSave();toast('Prix des favoris mis à jour')}
+  (j.results||[]).forEach(x=>{const s=norm(x,true),fv=favs.find(f=>f.id===s.id);if(fv)Object.assign(fv,snap(s))});G.favStatus='';scheduleSave();if(!silent)toast('Prix des favoris mis à jour')}
  catch(e){G.favStatus='error';G.favErr=e.name==='AbortError'?'délai dépassé':'connexion refusée ou bloquée'}
  render()}
 function gasSorted(){const R=[...G.results];if(!R.length)return R;const minP=Math.min(...R.map(x=>x.price));
@@ -1706,7 +1719,7 @@ function stRow(s,isFavList){const cv=[s.cp,s.ville].filter(Boolean).join(' '),de
  else if(s.vsNear!=null&&Math.abs(s.vsNear)>=0.01)g.push(s.vsNear>0?`${eur(s.vsNear)} d’économie sur 40 L par rapport à la plus proche`:`${eur(-s.vsNear)} de plus sur 40 L que la plus proche`)}
  const fl=FUELS.find(x=>x[0]===G.fuel)[1];
  const others=(s.fuels||[]).filter(x=>x.k!==G.fuel);
- return `<div class="st ${s.best?'best':''} ${isFavList?'favst':''}"><div class="top"><div>${s.price?`<div class="pr">${pf(s.price)} <small>€/L · ${fl}</small></div>`:`<div class="pr" style="font-size:15px;color:#a3b2c4">${fl} : prix non déclaré</div>`}${s.best?'<span class="tag warn" style="margin-top:6px">Meilleur prix</span>':s.top?'<span class="tag" style="margin-top:6px">Parmi les moins chers</span>':''}${s.rupture?'<span class="tag bad" style="margin-top:6px">Rupture signalée</span>':''}</div><div style="display:flex;gap:8px;align-items:flex-start"><div class="dist"><b>${s.dist!=null?(s.dist<10?s.dist.toFixed(1).replace('.',','):Math.round(s.dist))+' km':'—'}</b><span>${s.dist!=null?'à vol d’oiseau':'distance inconnue'}</span></div><button class="favb ${isFav?'on':''}" data-a="gasfav:${s.id}" aria-label="${isFav?'Retirer des favoris':'Ajouter aux favoris'}">${ic('star',20)}</button></div></div>
+ return `<div class="st ${s.best?'best':''} ${isFavList?'favst':''}"><div class="top"><div>${s.price?`<div class="pr">${pf(s.price)} <small>€/L · ${fl}</small></div>`:`<div class="pr" style="font-size:15px;color:#a3b2c4">${fl} : prix non déclaré</div>`}${+S.prefs.gasAlert>0&&s.price&&s.price<=+S.prefs.gasAlert?'<span class="tag" style="margin-top:6px;background:rgba(95,179,168,.2);color:#8fd3c8">Sous ton alerte</span> ':''}${s.best?'<span class="tag warn" style="margin-top:6px">Meilleur prix</span>':s.top?'<span class="tag" style="margin-top:6px">Parmi les moins chers</span>':''}${s.rupture?'<span class="tag bad" style="margin-top:6px">Rupture signalée</span>':''}</div><div style="display:flex;gap:8px;align-items:flex-start"><div class="dist"><b>${s.dist!=null?(s.dist<10?s.dist.toFixed(1).replace('.',','):Math.round(s.dist))+' km':'—'}</b><span>${s.dist!=null?'à vol d’oiseau':'distance inconnue'}</span></div><button class="favb ${isFav?'on':''}" data-a="gasfav:${s.id}" aria-label="${isFav?'Retirer des favoris':'Ajouter aux favoris'}">${ic('star',20)}</button></div></div>
  <div class="nm">${esc(s.adresse||'Adresse non fournie')}</div><div class="ad">${esc(cv)}${s.pop==='A'?' · Autoroute':''}${s.h24?' · Automate 24h/24':''}</div><div class="m">${s.price?age(s.maj):''}${isFavList&&s.checkedAt?`<span>Relevé dans Minoa le ${new Date(s.checkedAt).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>`:''}</div>${g.length?`<div class="gap">${g.join(' · ')}</div>`:''}
  ${others.length?`<div class="fuelchips">${others.map(x=>`<span class="${old(x.maj)?'old':''}" title="${x.maj?'Mis à jour '+new Date(x.maj).toLocaleString('fr-FR'):'Date inconnue'}"><em>${x.l}</em>${pf(x.price)} €${old(x.maj)?' · ancien':''}</span>`).join('')}</div>`:''}
  <div class="go"><a href="https://maps.apple.com/?daddr=${dest}&dirflg=d" target="_blank" rel="noopener">${ic('car',16)}Plans</a><a href="https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving" target="_blank" rel="noopener">${ic('right',16)}Google Maps</a></div></div>`}
@@ -1719,10 +1732,32 @@ async function placeSearch(q){q=String(q||'').trim();if(!q)return;G.q=q;G.status
  if(g&&g!=='none'){G.loc=g;return gasFetch()}
  if(g==='none'){G.status='geofail';return render()}
  G.loc=/^\d{5}$/.test(q)?{lat:null,lon:null,cp:q,label:'Code postal '+q,mode:'place'}:{lat:null,lon:null,label:q,mode:'place'};gasFetch()}
+/* ===== Stations : mise à jour automatique (uniquement quand l’appli est ouverte) ===== */
+const GAS_TTL=10*60e3;
+async function autoGas(force){if(G.busyAuto||U.splash)return;const fresh=G.fetchedAt&&Date.now()-G.fetchedAt<GAS_TTL&&G.status==='ok';if(fresh&&!force)return;
+ if(navigator.onLine===false)return;if(!force&&G.status!=='ok'&&G.lastTry&&Date.now()-G.lastTry<60e3)return;G.busyAuto=true;const go=f=>{G.lastTry=Date.now();return f()};
+ try{if(G.loc&&G.loc.lat!=null||G.loc&&G.loc.mode==='place'){await go(gasFetch)}
+  else{const w=G.where;if(w&&w.mode==='place'){G.loc={lat:w.lat,lon:w.lon,cp:w.cp||'',label:w.label,mode:'place'};await go(gasFetch)}
+   else if(w&&w.mode==='gps'&&navigator.geolocation){let st='prompt';try{st=(await navigator.permissions.query({name:'geolocation'})).state}catch(e){}
+    if(st==='granted'){G.auto=true;go(locate)}}}
+  if((S.gasFav||[]).length&&(!G.favAt||Date.now()-G.favAt>GAS_TTL)){G.favAt=Date.now();favRefresh(true)}}
+ finally{G.busyAuto=false}}
+function gasAlertCheck(){const a=+S.prefs.gasAlert;if(!(a>0)||G.status!=='ok')return;const hit=G.results.filter(x=>x.price&&x.price<=a).sort((x,y)=>x.price-y.price)[0];
+ if(hit&&G.alertShown!==hit.id+hit.price){G.alertShown=hit.id+hit.price;toast(`Alerte prix : ${pf(hit.price)} €/L · ${hit.adresse||'station'}${hit.dist!=null?' à '+(hit.dist<10?hit.dist.toFixed(1).replace('.',','):Math.round(hit.dist))+' km':''}`,4500)}}
+function bestPick(){if(G.status!=='ok'||!G.results.length)return null;const R=gasSorted(),withDet=R.filter(x=>x.det);
+ if(withDet.length){const b=[...withDet].sort((a,b)=>b.det.net-a.det.net)[0];return {s:b,mode:'gain'}}return {s:[...R].sort((a,b)=>a.price-b.price)[0],mode:'price'}}
+function gasHomeCard(){const fl=FUELS.find(x=>x[0]===G.fuel)[1],a=+S.prefs.gasAlert;
+ const head=`<div class="gh7h"><span class="c7i">${ic('fuel',18)}</span><b>Meilleur plein près de toi</b><span class="gh7f">${fl}</span></div>`;
+ if(G.status==='loading'||G.status==='locating'||G.status==='geocoding')return `<section class="c7 gh7" data-a="tab:gas">${head}<div class="gh7l"><span class="spin"></span>Analyse des prix officiels…</div></section>`;
+ const bp=bestPick();
+ if(!bp)return `<section class="c7 gh7" data-a="tab:gas">${head}<div class="e7"><span>${G.status==='error'||G.status==='offline'?'Prix indisponibles pour le moment.':'Choisis ta zone une fois : Minoa analysera les stations à chaque ouverture.'}</span><button class="emp-b" data-a="tab:gas">${ic('flag',14)}${G.where?'Voir':'Choisir'}</button></div></section>`;
+ const s=bp.s,hit=a>0&&s.price<=a,age=G.fetchedAt?Math.max(0,Math.round((Date.now()-G.fetchedAt)/60e3)):0;
+ return `<section class="c7 gh7 ${hit?'hit':''}" data-a="tab:gas">${head}<div class="gh7m"><div><b class="gh7p">${pf(s.price)}<small> €/L</small></b><span class="gh7a">${esc(s.adresse||'Station')}${s.ville?' · '+esc(s.ville):''}</span></div><div class="gh7d">${s.dist!=null?`<b>${s.dist<10?s.dist.toFixed(1).replace('.',','):Math.round(s.dist)} km</b>`:''}${bp.mode==='gain'&&s.det&&!s.isNear&&s.det.net>=.05?`<span class="pos">+${eur(s.det.net)} gagnés</span>`:s.isNear?'<span>la plus proche</span>':'<span>le moins cher</span>'}</div></div>
+ <div class="gh7s">${hit?`<span class="gh7alert">${ic('bell',12)}Sous ton alerte de ${pf(a)} €</span>`:''}<span>${G.results.length} stations analysées · prix chargés ${age<1?'à l’instant':`il y a ${age} min`}</span></div></section>`}
 function locate(){if(!navigator.geolocation){G.status='nogeo';return render()}
  G.status='locating';render();
  navigator.geolocation.getCurrentPosition(p=>{G.loc={lat:p.coords.latitude,lon:p.coords.longitude,label:'Autour de moi',mode:'gps'};gasFetch()},
-  e=>{G.status=e&&e.code===1?'denied':'nogeo';if(U.tab==='gas')render()},{enableHighAccuracy:false,timeout:12000,maximumAge:300000})}
+  e=>{G.status=e&&e.code===1?'denied':'nogeo';if(G.auto){G.status='idle';G.auto=false}if(U.tab==='gas'||U.tab==='home')render()},{enableHighAccuracy:false,timeout:12000,maximumAge:300000})}
 
 
 /* ===== Rendu ===== */
@@ -1906,7 +1941,7 @@ function openSlot(key){const m=S.plan[key]||{title:'',ingredients:''},[d,mo]=key
 function addToShop(str){const have=new Set(S.shop.filter(x=>!x.done).map(x=>x.name.toLowerCase()));let n=0;
  lines_(str).forEach(s=>{if(!have.has(s.toLowerCase())){S.shop.push({id:uid(),name:s,done:false});have.add(s.toLowerCase());n++}});
  toast(n?`${n} article${n>1?'s':''} ajouté${n>1?'s':''} aux courses`:'Déjà dans la liste')}
-function dashSheet(){const L=[['tasks','Tâches du jour'],['events','Rendez-vous et échéances'],['meals','Repas du jour'],['budget','Budget du mois'],['projects','Projets en cours'],['shop','Courses'],['car','Ma voiture'],['shortcuts','Mes espaces']];
+function dashSheet(){const L=[['tasks','Tâches du jour'],['events','Rendez-vous et échéances'],['meals','Repas du jour'],['budget','Budget du mois'],['projects','Projets en cours'],['shop','Courses'],['car','Ma voiture'],['gas','Meilleur plein près de moi'],['shortcuts','Mes espaces']];
  sheet(`<h3>Personnaliser l’accueil${closeBtn}</h3>${L.map(([k,l])=>`<div class="toggle"><span>${l}</span><button class="sw ${S.dash[k]?'on':''}" data-a="dt:${k}" aria-label="${l}"></button></div>`).join('')}`)}
 function armed(btn,label){if(btn.dataset.armed)return true;btn.dataset.armed=1;btn.dataset.old=btn.innerHTML;btn.textContent=label||'Confirmer ?';setTimeout(()=>{if(btn.isConnected){delete btn.dataset.armed;btn.innerHTML=btn.dataset.old}},3000);return false}
 
@@ -2028,7 +2063,7 @@ const STORE={db:'minoa',os:'kv',key:'state',ls:'minoa.state.v1',schema:1};
 const P_={ready:false,mode:'idb',lastJSON:null,savedAt:null,saving:false,again:false,timer:null,err:'',persisted:null,firstRun:false};
 const DEFAULTS=JSON.parse(JSON.stringify(S));
 const GDEF={fuel:G.fuel,radius:G.radius};
-function collect(){const d={};Object.keys(DEFAULTS).forEach(k=>d[k]=S[k]);d.gasPrefs={fuel:G.fuel,radius:G.radius};return d}
+function collect(){const d={};Object.keys(DEFAULTS).forEach(k=>d[k]=S[k]);d.gasPrefs={fuel:G.fuel,radius:G.radius,where:G.loc?(G.loc.mode==='gps'?{mode:'gps'}:{mode:'place',label:G.loc.label,cp:G.loc.cp||'',lat:G.loc.lat,lon:G.loc.lon}):(G.where||null)};return d}
 function applyData(d){
  if(!d||typeof d!=='object')throw new Error('format');
  Object.keys(DEFAULTS).forEach(k=>{const def=DEFAULTS[k],v=d[k];
@@ -2036,7 +2071,8 @@ function applyData(d){
   else if(def&&typeof def==='object')S[k]=Object.assign(JSON.parse(JSON.stringify(def)),v&&typeof v==='object'&&!Array.isArray(v)?v:{});
   else S[k]=v??def});
  const g=d.gasPrefs||{};if(FUELS.some(x=>x[0]===g.fuel))G.fuel=g.fuel;else G.fuel=GDEF.fuel;
- G.radius=+g.radius>=1&&+g.radius<=30?+g.radius:GDEF.radius}
+ G.radius=+g.radius>=1&&+g.radius<=30?+g.radius:GDEF.radius;
+ G.where=g.where&&(g.where.mode==='gps'||g.where.label)?g.where:null}
 function idbOpen(){return new Promise((res,rej)=>{let r;try{r=indexedDB.open(STORE.db,1)}catch(e){return rej(e)}
  r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE.os))r.result.createObjectStore(STORE.os)};
  r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('IndexedDB'));r.onblocked=()=>rej(new Error('IndexedDB bloqué'))})}
@@ -2118,7 +2154,7 @@ function confirmWipe(){const c=dataCounts(collect());
 document.addEventListener('change',e=>{if(e.target.id==='importf'){readImport(e.target.files[0]);e.target.value=''}});
 
 
-document.addEventListener('change',e=>{const t=e.target;if(t.dataset.prefSel){S.prefs[t.dataset.prefSel]=+t.value;applyPrefs();scheduleSave();toast('Réglage enregistré');if(U.tab==='settings')setTimeout(render,50)}if(t.dataset.prefInput){S.prefs[t.dataset.prefInput]=t.value.trim().slice(0,24);applyPrefs();scheduleSave();toast('Enregistré')}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset.gasalert){const v=+String(t.value||'').replace(',','.');S.prefs.gasAlert=v>0.5&&v<4?v:'';scheduleSave();G.alertShown=null;toast(S.prefs.gasAlert?'Alerte à '+pf(v)+' €/L':'Alerte retirée');gasAlertCheck();render();return}if(t.dataset.prefSel){S.prefs[t.dataset.prefSel]=+t.value;applyPrefs();scheduleSave();toast('Réglage enregistré');if(U.tab==='settings')setTimeout(render,50)}if(t.dataset.prefInput){S.prefs[t.dataset.prefInput]=t.value.trim().slice(0,24);applyPrefs();scheduleSave();toast('Enregistré')}});
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset.prefInput){S.prefs[t.dataset.prefInput]=t.value.trim().slice(0,24);saveUIF()}});
 document.addEventListener('input',e=>{const t=e.target,f=t.form;if(!f)return;
  if(f.dataset.simu)simuCalc();
@@ -2126,6 +2162,8 @@ document.addEventListener('input',e=>{const t=e.target,f=t.form;if(!f)return;
  if(f.dataset.form==='receipts'){t.classList.remove('ocrfill');delete t.dataset.ocr}
  if(f.dataset.hourly){const n=v=>+String(v||'').replace(',','.').replace(/\s/g,''),m=n(f.elements.m.value),h=n(f.elements.h.value)||35,o=$('#hwcalc');if(o)o.textContent=m>0?`Soit environ ${eur(m/(h*52/12))} net de l’heure.`:''}
  if(f.dataset.form==='money'&&t.name==='amount'){let o=f.querySelector('.hwl');if(!o){o=document.createElement('p');o.className='hwl';t.closest('label').after(o)}const v=+String(t.value||'').replace(',','.').replace(/\s/g,''),h=hw(v);o.innerHTML=h&&f.elements.kind.value==='Dépense'?`${ic('hour',13)}Soit <b>${h}</b> de travail`:''}});
+setInterval(()=>{if(document.visibilityState==='visible'&&U.tab==='gas'&&G.status==='ok'&&G.fetchedAt&&Date.now()-G.fetchedAt>=5*60e3)gasFetch()},30e3);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&!U.splash&&(U.tab==='gas'||U.tab==='home'&&S.dash.gas!==false))autoGas()});
 render();boot();
 </script>
 <script>
