@@ -1201,7 +1201,7 @@ const S={tasks:[],events:[],money:[],shop:[],mealIdeas:[],plan:{},prefs:{mapStyl
  dash:{tasks:true,events:true,meals:true,budget:true,projects:true,shop:true,shortcuts:true,car:true,gas:true}};
 
 /* ===== État de l'interface ===== */
-const APPV=22;
+const APPV=23;
 const UIF=(()=>{try{return JSON.parse(localStorage.getItem('minoa.ui')||'{}')}catch(e){return {}}})();
 (()=>{const r=document.documentElement;if(UIF.noanim)r.classList.add('noanim');if(UIF.big)r.classList.add('bigtext')})();
 const U={splash:!UIF.nosplash,tab:'home',orgSeg:'tasks',taskF:'Toutes',calM:ym,calSel:'',moneyM:ym,mealSeg:'week',weekOff:0,ideaF:'Tous',pfF:'Toutes',carSeg:'fuel',carM:ym,opF:'Tout',mealDay:'',carImg:0,jq:'',jT:'Tous'};
@@ -1906,49 +1906,63 @@ function parseFuelTicket(raw){
 
 
 function parseReceipt(raw){
- const T=String(raw||'').replace(/[‘’`]/g,"'");const lines=T.split(/\n+/).map(l=>l.trim()).filter(Boolean);const U=lines.map(l=>l.toUpperCase());
- const amt=l=>[...l.matchAll(/(?<![\d,.])(\d{1,3}(?:[ .]\d{3})*|\d+)[,.](\d{2})(?![\d])/g)].map(m=>+(m[1].replace(/[ .]/g,'')+'.'+m[2]));
- const r={};
- // date (la plus plausible, pas dans le futur)
- const now=new Date();for(const m of T.matchAll(/(\d{2})[\/.-](\d{2})[\/.-](\d{2,4})/g)){let[,d,mo,y]=m;if(y.length===2)y='20'+y;const dt=new Date(+y,+mo-1,+d);if(+mo>=1&&+mo<=12&&+d>=1&&+d<=31&&dt<=now&&+y>2000){r.date=`${y}-${mo}-${d}`;break}}
- // total
- const pri=[/NET\s*A\s*PAYER/,/TOTAL\s*PAY/,/TOTAL\s*TTC/,/MONTANT\s*TTC/,/TOTAL\b/,/A\s*PAYER/,/MONTANT/];
- for(const re of pri){for(let i=0;i<U.length;i++){if(re.test(U[i])&&!/HT\b|TVA/.test(U[i].replace(/MONTANT TTC/,''))){let a=amt(lines[i]);if(!a.length)a=amt(lines[i+1]||'');if(!a.length&&/MONTANT\s*TTC/.test(U[i])){const n=amt(lines[i+1]||'');if(n.length)a=[n[n.length-1]]}if(a.length){r.price=Math.max(...a);break}}}if(r.price)break}
- if(!r.price){const all=lines.flatMap(amt).filter(v=>v<100000);if(all.length)r.price=Math.max(...all)}
- // magasin
- const B=['FNAC','DARTY','BOULANGER','CARREFOUR','E.LECLERC','LECLERC','AUCHAN','IKEA','DECATHLON','APPLE','LEROY MERLIN','CASTORAMA','BRICO DEPOT','BOULANGER','CDISCOUNT','AMAZON','INTERSPORT','GO SPORT','SEPHORA','ZARA','H&M','PRIMARK','ACTION','CONFORAMA','BUT','MAISONS DU MONDE','GALERIES LAFAYETTE','PRINTEMPS','BON MARCHE','MONOPRIX','LIDL','ALDI','INTERMARCHE','SUPER U','HYPER U','CASINO','ORANGE','SFR','BOUYGUES','FREE','SAMSUNG','NORAUTO','FEU VERT','SPEEDY','MIDAS','KIABI','JD SPORTS','FOOT LOCKER','NIKE','ADIDAS','APPLE STORE','MICROMANIA','LDLC','GRAND OPTICAL','OPTIC 2000','AFFLELOU'];
- const up=U.join('\n');const bm=B.find(b=>up.includes(b));if(bm)r.store=bm.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase()).replace('E.leclerc','E.Leclerc').replace('H&m','H&M').replace('Ldlc','LDLC').replace('Sfr','SFR');
- // produit : première ligne d'article avec un prix (hors total, TVA, paiement)
- const skip=/TOTAL|TVA|\bHT\b|TTC|PAY|CB\b|CARTE|ESPECE|RENDU|MONTANT|REMISE|CAGNOTTE|CLIENT|MAGASIN|TRANSACTION|OPERATEUR|TICKET|EUROS|STATUT|SIRET|TEL\b/;
- for(let i=0;i<lines.length;i++){if(skip.test(U[i]))continue;const a=amt(lines[i]);let txt=lines[i].replace(/(?<![\d,.])(\d{1,3}(?:[ .]\d{3})*|\d+)[,.]\d{2}(?!\d)/g,'').replace(/\b\d{6,}\b/g,'').replace(/[*€]/g,'').trim();
-  const nextA=amt(lines[i+1]||'');
-  if((a.length||/^\d{8,}/.test((lines[i+1]||'').trim().replace(/\s/g,'')))&&/[A-Za-zÀ-ÿ]{3}/.test(txt)){
-   txt=txt.split(/\s+/).filter((w,k)=>!(k===0&&/^[A-Z0-9]{2,3}$/.test(w)));{const o=[];for(const w of txt){if(/^[A-Za-zÀ-ÿ0-9'’-]{3,}$/.test(w)&&/[A-Za-zÀ-ÿ]/.test(w)||(o.length&&/^\d{1,3}$/.test(w)))o.push(w);else if(o.length)break}txt=o.join(' ')}
-   txt=txt.replace(/^[^A-Za-zÀ-ÿ]+/,'').replace(/^(?:[A-Z0-9]{1,3}\s+)+(?=[A-Za-zÀ-ÿ]{4})/,'');r.title=txt.toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase()).replace(/^\s+/,'');
-   const extra=[];for(let j=i+1;j<Math.min(lines.length,i+5);j++){if(skip.test(U[j])||amt(lines[j]).length&&j>i+1)break;const l=lines[j].trim();if(/^\d{6,}$/.test(l))continue;if(/[A-Za-z]{3}/.test(l)||/REF|S[ÉE]RIE|SN/i.test(l))extra.push(l)}
-   if(extra.length)r.note=extra.map(x=>x.replace(/[|“”"*—_]+/g,' ').replace(/^[\s'’.,:;-]+|[\s'’.,:;-]+$/g,'').replace(/\s{2,}/g,' ')).filter(Boolean).join(' · ');break}}
- const sn=T.match(/(?:S[ÉEé]RIE|SERIAL|S\/N|N°\s*DE\s*S[ÉE]RIE)\s*:?\s*([A-Z0-9-]{4,})/i);if(sn&&!(r.note||'').includes(sn[1]))r.note=[r.note,'N° de série '+sn[1]].filter(Boolean).join(' · ');
+ const T=String(raw||'').replace(/[‘’`]/g,"'");const lines=T.split(/\n+/).map(l=>l.trim()).filter(l=>l.length>1);const U=lines.map(l=>l.toUpperCase());
+ const amt=l=>[...String(l||'').matchAll(/(?<![\d,.])(\d{1,3}(?:[ .]\d{3})*|\d+)\s?[,.]\s?(\d{2})(?![\d])/g)].map(m=>+(m[1].replace(/[ .]/g,'')+'.'+m[2]));
+ const r={},now=new Date();
+ /* date : 03/11/2026, 03.11.26 ou « 03 novembre 2026 » */
+ const MO={JANV:1,FEVR:2,FÉVR:2,MARS:3,AVR:4,MAI:5,JUIN:6,JUIL:7,AOUT:8,AOÛT:8,SEPT:9,OCT:10,NOV:11,DEC:12,DÉC:12};
+ const okD=(d,mo,y)=>{if(y<100)y+=2000;const dt=new Date(y,mo-1,d);return mo>=1&&mo<=12&&d>=1&&d<=31&&y>2000&&dt<=now?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null};
+ for(const m of T.matchAll(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/g)){const v=okD(+m[1],+m[2],+m[3]);if(v){r.date=v;break}}
+ if(!r.date)for(const m of T.toUpperCase().matchAll(/(\d{1,2})\s+(JANV|F[EÉ]VR|MARS|AVR|MAI|JUIN|JUIL|AO[UÛ]T|SEPT|OCT|NOV|D[EÉ]C)[A-ZÉÈÛ.]*\s+(\d{4})/g)){const v=okD(+m[1],MO[m[2]]||MO[m[2].normalize('NFD').replace(/[\u0300-\u036f]/g,'')],+m[3]);if(v){r.date=v;break}}
+ /* total : lignes « TOTAL / A PAYER / MONTANT TTC », sans remises, TVA, articles… on garde le plus grand */
+ const bad=/REMIS|TVA|\bHT\b|ARTICLE|ELIGIBLE|ÉLIGIBLE|ECONOMI|ÉCONOMI|PAIEMENTS?\s+PAR\s+TR|CAGNOT|FIDELIT|FIDÉLIT|POINTS?/;
+ const tot=[];U.forEach((u,i)=>{if(/\bTOTAL\b|\bTOT\b|A\s*PAYER|NET\s*A|MONTANT\s*TTC|TOTAL\s*TTC|\bRE[CÇ]U\b|CARTE\s*BANCAIRE|\bCB\b/.test(u)&&!bad.test(u)){let a=amt(lines[i]);if(!a.length&&/TOTAL|A\s*PAYER/.test(u))a=amt(lines[i+1]);a.filter(v=>v>0&&v<100000).forEach(v=>tot.push({v,w:/\bTOTAL\b|A\s*PAYER|NET\s*A/.test(u)?2:1}))}});
+ if(tot.length){const best=Math.max(...tot.map(x=>x.v));r.price=best;r.sure=tot.filter(x=>Math.abs(x.v-best)<.01).length>1}
+ /* magasin */
+ const B=['FNAC','DARTY','BOULANGER','CARREFOUR','E.LECLERC','LECLERC','AUCHAN','IKEA','DECATHLON','APPLE','LEROY MERLIN','CASTORAMA','BRICO DEPOT','CDISCOUNT','AMAZON','INTERSPORT','GO SPORT','SEPHORA','ZARA','H&M','PRIMARK','ACTION','CONFORAMA','MAISONS DU MONDE','GALERIES LAFAYETTE','PRINTEMPS','MONOPRIX','FRANPRIX','LIDL','ALDI','INTERMARCHE','INTERMARCHÉ','SUPER U','HYPER U','CASINO','PICARD','GRAND FRAIS','ORANGE','SFR','BOUYGUES','SAMSUNG','NORAUTO','FEU VERT','SPEEDY','MIDAS','KIABI','JD SPORTS','FOOT LOCKER','NIKE','ADIDAS','MICROMANIA','LDLC','OPTIC 2000','AFFLELOU','LECLERC DRIVE','NETTO','LEADER PRICE','BIOCOOP','NATURALIA','TOTALENERGIES','ESSO','SHELL'];
+ const up=U.join('\n');const bm=B.find(b=>up.includes(b));if(bm)r.store=bm.replace(/\b\w+/g,w=>w.length<=3&&/^[A-Z&]+$/.test(w)&&!['BUT'].includes(w)?w:w[0]+w.slice(1).toLowerCase()).replace('E.leclerc','E.Leclerc').replace('Totalenergies','TotalEnergies');
+ /* articles : lignes avec du texte et un prix en fin de ligne */
+ const skip=/TOTAL|TVA|\bHT\b|TTC|PAY|\bCB\b|CARTE|ESPECE|ESPÈCE|RENDU|MONTANT|REMISE|CAGNOTTE|CLIENT|MAGASIN|TRANSACTION|OPERATEUR|OPÉRATEUR|TICKET|EUROS|STATUT|SIRET|TEL\b|CAISSE|RE[CÇ]U|ARTICLES?\b|MERCI|FIDELIT|FIDÉLIT/;
+ const clean=x=>x.replace(/(?<![\d,.])(\d{1,3}(?:[ .]\d{3})*|\d+)\s?[,.]\s?\d{2}(?!\d)/g,'').replace(/\b\d+\s*[*x×]\s*/gi,'').replace(/\b\d{6,}\b/g,'').replace(/[*€|“”"_]/g,'').replace(/\.{2,}/g,'').replace(/\s{2,}/g,' ').trim();
+ const words=x=>x.split(/\s+/).filter(w=>/^[A-Za-zÀ-ÿ0-9'’&-]{3,}$/.test(w)&&/[A-Za-zÀ-ÿ]{3}/.test(w));
+ const items=[];lines.forEach((l,i)=>{if(skip.test(U[i]))return;const a=amt(l),t=clean(l),w=words(t);if((a.length||/^\d{8,}/.test((lines[i+1]||'').replace(/\s/g,'')))&&w.length&&w.join('').length>=4)items.push({i,t:w.join(' ')})});
+ const cap=x=>x.toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase());
+ if(items.length>=4)r.title=`Courses${r.store?' '+r.store:''} (${items.length} articles)`;
+ else if(items.length){let t=items[0].t.split(' ');if(/^[A-Z0-9]{2,3}$/.test(t[0])&&t.length>1)t=t.slice(1);r.title=cap(t.join(' '))}
+ /* note : uniquement références utiles (n° de série, référence, modèle, IMEI) */
+ const notes=[];lines.forEach(l=>{const m=l.match(/\b(S[ÉE]RIE|SERIAL|S\/N|SN|R[ÉE]F(?:[ÉE]RENCE)?|MOD[ÈE]LE|IMEI)\b\.?\s*:?\s*([A-Z0-9][A-Z0-9-]{3,})/i);if(m)notes.push((/^s|^S/.test(m[1])&&!/^R/i.test(m[1])?'N° de série ':/IMEI/i.test(m[1])?'IMEI ':/MOD/i.test(m[1])?'Modèle ':'Réf. ')+m[2])});
+ if(notes.length)r.note=[...new Set(notes)].slice(0,3).join(' · ');
+ if(items.length===1){const i=items[0].i,d=lines[i+1]&&!amt(lines[i+1]).length&&!skip.test(U[i+1])?words(clean(lines[i+1])).join(' '):'';if(d&&d.length>=6&&!/^\d/.test(d))r.note=[cap(d),r.note].filter(Boolean).join(' · ')}
  return r}
-
-
 /* Prépare la photo pour la lecture : enlève le fond coloré (table, bois…), renforce le contraste, agrandit si besoin */
-function prepImg(file){return new Promise(ok=>{const u=URL.createObjectURL(file),im=new Image();im.onerror=()=>ok(file);im.onload=()=>{try{const M=Math.max(im.naturalWidth,im.naturalHeight),k=Math.min(2,Math.max(1,1000/M),2400/M);
- const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);const x=c.getContext('2d');x.drawImage(im,0,0,c.width,c.height);
+function paperBox(im){try{const W=160,H=Math.max(40,Math.round(160*im.naturalHeight/im.naturalWidth)),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(im,0,0,W,H);const p=x.getImageData(0,0,W,H).data,L=new Float32Array(W*H);
+ for(let i=0,j=0;i<p.length;i+=4,j++){const mx=Math.max(p[i],p[i+1],p[i+2]),mn=Math.min(p[i],p[i+1],p[i+2]);L[j]=(p[i]+p[i+1]+p[i+2])/3-(mx-mn)*1.5}
+ const s=[...L].sort((a,b)=>a-b),thr=(s[Math.floor(s.length*.15)]+s[Math.floor(s.length*.97)])/2;const col=new Float32Array(W),row=new Float32Array(H);
+ for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++)if(L[y*W+xx]>thr){col[xx]++;row[y]++}
+ const span=(a,n,f)=>{let best=[0,0],cur=-1;for(let i=0;i<=n;i++){const on=i<n&&a[i]>f;if(on&&cur<0)cur=i;if(!on&&cur>=0){if(i-cur>best[1]-best[0])best=[cur,i];cur=-1}}return best};
+ const cx=span(col,W,H*.2),cy=span(row,H,(cx[1]-cx[0])*.3);if(cx[1]-cx[0]<W*.12||cy[1]-cy[0]<H*.2)return null;
+ const fx=im.naturalWidth/W,fy=im.naturalHeight/H,pad=.05;const x0=Math.max(0,(cx[0]-W*pad)*fx),y0=Math.max(0,(cy[0]-H*pad)*fy),x1=Math.min(im.naturalWidth,(cx[1]+W*pad)*fx),y1=Math.min(im.naturalHeight,(cy[1]+H*pad)*fy);
+ if((x1-x0)*(y1-y0)>im.naturalWidth*im.naturalHeight*.9)return null;return [x0,y0,x1-x0,y1-y0]}catch(e){return null}}
+function prepImg(file){return new Promise(ok=>{const u=URL.createObjectURL(file),im=new Image();im.onerror=()=>ok(file);im.onload=()=>{try{const pb=null,bx=[0,0,im.naturalWidth,im.naturalHeight],k=Math.min(3,Math.max(1,1100/bx[2]),5000/bx[3],3200/bx[2]);
+ const c=document.createElement('canvas');c.width=Math.round(bx[2]*k);c.height=Math.round(bx[3]*k);const x=c.getContext('2d');x.drawImage(im,bx[0],bx[1],bx[2],bx[3],0,0,c.width,c.height);
  const d=x.getImageData(0,0,c.width,c.height),p=d.data,H=new Uint32Array(256),g=new Uint8Array(p.length/4),m=new Uint8Array(p.length/4);let n=0;
- for(let i=0,j=0;i<p.length;i+=4,j++){const r=p[i],gg=p[i+1],b=p[i+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),sat=mx?(mx-mn)/mx:0;g[j]=.299*r+.587*gg+.114*b;if(sat>.16)m[j]=1;else{H[g[j]]++;n++}}
+ for(let i=0,j=0;i<p.length;i+=4,j++){const r=p[i],gg=p[i+1],b=p[i+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),sat=mx?(mx-mn)/mx:0;g[j]=.299*r+.587*gg+.114*b;if(!pb&&sat>.16)m[j]=1;else{H[g[j]]++;n++}}
  const pc=q=>{let a=0;for(let v=0;v<256;v++){a+=H[v];if(a>=n*q)return v}return 255},lo=pc(.02),hi=Math.max(lo+20,pc(.6));
  for(let i=0,j=0;i<p.length;i+=4,j++){const v=m[j]?255:Math.max(0,Math.min(255,(g[j]-lo)/(hi-lo)*255));p[i]=p[i+1]=p[i+2]=v}
  x.putImageData(d,0,0);URL.revokeObjectURL(u);ok(c)}catch(e){ok(file)}};im.src=u})}
-async function ocrRead(file,parse,need){const w=await tessWorker();const c=await prepImg(file);let r=parse((await w.recognize(c)).data.text);
- if(need(r)){const r2=parse((await w.recognize(file)).data.text);if(r2.sure&&!r.sure)r=r2;else Object.keys(r2).forEach(k=>{if(r[k]==null||r[k]==='')r[k]=r2[k]})}return r}
+async function ocrRead(file,parse,need){const w=await tessWorker();const c=await prepImg(file);
+ const a=(await w.recognize(c)).data,b=(await w.recognize(file)).data,ra=parse(a.text),rb=parse(b.text);
+ /* on garde la lecture la plus fiable (cohérence des chiffres, puis confiance de l’outil), complétée par l’autre */
+ const sa=(ra.sure?100:0)+(+a.confidence||0),sb=(rb.sure?100:0)+(+b.confidence||0);const [r,o]=sa>=sb?[ra,rb]:[rb,ra];
+ Object.keys(o).forEach(k=>{if(r[k]==null||r[k]==='')r[k]=o[k]});r.conf=Math.max(+a.confidence||0,+b.confidence||0);return r}
 async function readReceiptTicket(file){const o=$('#ocr7');if(!o)return;
  if(navigator.onLine===false){o.innerHTML=`<div class="ocr7 err">${ic('info',15)}<span>Pas de connexion : la lecture du ticket a besoin d’Internet. La photo est gardée, remplis les champs à la main.</span></div>`;return}
  o.innerHTML=`<div class="ocr7"><span class="spin"></span><span>Lecture du ticket…<small>Quelques secondes. La première fois, Minoa télécharge l’outil de lecture (quelques Mo).</small></span></div>`;
  try{const r=await ocrRead(file,parseReceipt,r=>!r.price||!r.date||!r.title),f=$('[data-form=receipts]');if(!f||!$('#ocr7'))return;
   const put=(k,v)=>{if(v!=null&&v!==''&&f.elements[k]&&(!f.elements[k].value||k==='date'||f.elements[k].dataset.ocr)){f.elements[k].value=typeof v==='number'?String(v).replace('.',','):v;f.elements[k].classList.add('ocrfill');f.elements[k].dataset.ocr=1}};
-  put('title',r.title);put('store',r.store);put('date',r.date);put('amount',r.price);put('note',r.note);
+  put('title',r.title);put('store',r.store);put('date',r.date);put('amount',r.price);put('note',r.note);if(/^Courses/.test(r.title||'')&&f.elements.warranty){f.elements.warranty.value='Aucune';f.elements.warranty.classList.add('ocrfill')}
   const got=[r.title&&'produit',r.store&&'magasin',r.date&&'date',r.price&&'prix',r.note&&'référence / n° de série'].filter(Boolean),miss=[!r.title&&'le produit',!r.store&&'le magasin',!r.date&&'la date',!r.price&&'le prix'].filter(Boolean);
-  $('#ocr7').innerHTML=got.length?`<div class="ocr7 ${miss.length?'warn':'ok'}">${ic(miss.length?'info':'tick',15)}<span><b>Ticket lu : ${got.join(', ')}</b><small>Vérifie les champs surlignés${miss.length?` et complète ${miss.join(', ')}`:''}.</small></span></div>`
+  $('#ocr7').innerHTML=got.length?`<div class="ocr7 ${miss.length?'warn':'ok'}">${ic(miss.length?'info':'tick',15)}<span><b>Ticket lu : ${got.join(', ')}</b><small>Vérifie les champs surlignés${miss.length?` et complète ${miss.join(', ')}`:''}.${r.conf<50?' La photo est difficile à lire : pose le ticket bien à plat, sans pli ni ombre, sur un fond uni et foncé.':''}</small></span></div>`
    :`<div class="ocr7 warn">${ic('info',15)}<span><b>Ticket illisible</b><small>Reprends la photo bien à plat, nette, éclairée et en entier, ou remplis les champs à la main.</small></span></div>`}
  catch(e){const o2=$('#ocr7');if(o2)o2.innerHTML=`<div class="ocr7 err">${ic('info',15)}<span>La lecture du ticket n’a pas pu démarrer${window.self!==window.top?' dans Claude':''}. La photo est gardée : remplis les champs à la main.</span></div>`}}
 let TESS=null;
