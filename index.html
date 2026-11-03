@@ -1100,6 +1100,8 @@ html.bigtext body{zoom:1.1}
 .pp7a{display:flex;gap:6px;margin-top:6px}.pp7a a{flex:1;text-align:center;background:#d1925f;color:#1e2a3b!important;text-decoration:none;font-weight:800;border-radius:9px;padding:7px 0}.pp7a a+a{background:#34465f;color:#eef3f8!important}
 .leaflet-container{font-family:Manrope,-apple-system,sans-serif}.leaflet-control-attribution{background:rgba(20,30,46,.7)!important;color:#8d9bb0!important;font-size:9px!important}.leaflet-control-attribution a{color:#a3b2c4!important}
 .gm7ov{position:absolute;left:12px;right:60px;bottom:12px;z-index:500;display:flex;align-items:center;gap:8px;background:rgba(20,30,46,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:9px 12px;border-radius:12px;font-size:12.5px;color:#c3cedb;font-weight:600}
+.gm7s{position:absolute;left:10px;top:10px;z-index:500;display:flex;gap:2px;padding:3px;border-radius:11px;background:rgba(20,30,46,.85);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}.gm7s button{border:0;background:none;color:#c3cedb;font:700 12px Manrope,-apple-system,sans-serif;padding:6px 10px;border-radius:8px;cursor:pointer}.gm7s button.on{background:#d1925f;color:#1e2a3b}
+.gm7.lt #gmap{background:#e8e4dc}
 </style>
 </head>
 <body>
@@ -1193,11 +1195,11 @@ const DEF={receipts:{warranty:'2 ans (garantie légale)'},recur:{kind:'Dépense'
 const COLLS=['tasks','events','money','shop','mealIdeas','ideas','portfolio','fuel','carCosts','carDue','journal','gasFav','recur','receipts'];
 
 /* ===== Données (vides au départ) ===== */
-const S={tasks:[],events:[],money:[],shop:[],mealIdeas:[],plan:{},prefs:{gasAlert:'',regime:'Aucun',allergies:'',aime:'',evite:'',budget:'',name:'',splash:'on',anim:'on',text:'normal',wDays:45,exportEvery:14,lastExport:0},ideas:[],portfolio:[],fuel:[],carCosts:[],carDue:[],journal:[],car:{name:''},gasFav:[],recur:[],catBud:{},receipts:[],
+const S={tasks:[],events:[],money:[],shop:[],mealIdeas:[],plan:{},prefs:{mapStyle:'dark',gasAlert:'',regime:'Aucun',allergies:'',aime:'',evite:'',budget:'',name:'',splash:'on',anim:'on',text:'normal',wDays:45,exportEvery:14,lastExport:0},ideas:[],portfolio:[],fuel:[],carCosts:[],carDue:[],journal:[],car:{name:''},gasFav:[],recur:[],catBud:{},receipts:[],
  dash:{tasks:true,events:true,meals:true,budget:true,projects:true,shop:true,shortcuts:true,car:true,gas:true}};
 
 /* ===== État de l'interface ===== */
-const APPV=20;
+const APPV=21;
 const UIF=(()=>{try{return JSON.parse(localStorage.getItem('minoa.ui')||'{}')}catch(e){return {}}})();
 (()=>{const r=document.documentElement;if(UIF.noanim)r.classList.add('noanim');if(UIF.big)r.classList.add('bigtext')})();
 const U={splash:!UIF.nosplash,tab:'home',orgSeg:'tasks',taskF:'Toutes',calM:ym,calSel:'',moneyM:ym,mealSeg:'week',weekOff:0,ideaF:'Tous',pfF:'Toutes',carSeg:'fuel',carM:ym,opF:'Tout',mealDay:'',carImg:0,jq:'',jT:'Tous'};
@@ -1777,14 +1779,17 @@ function gasHomeCard(){const fl=FUELS.find(x=>x[0]===G.fuel)[1],a=+S.prefs.gasAl
 /* ===== Carte des stations (Leaflet + OpenStreetMap, chargée seulement quand elle s’affiche) ===== */
 let LEAF=null;
 function mapBox(){const ok=G.status==='ok'&&G.results.some(x=>x.lat!=null);setTimeout(initGasMap,0);
- return `<div class="gm7 ${G.mapBig?'big':''}"><div id="gmap"></div><div class="gm7b"><button class="gbtn" data-a="mapbig" aria-label="${G.mapBig?'Réduire':'Agrandir'} la carte">${ic(G.mapBig?'down':'up',16)}</button>${G.loc&&G.loc.mode==='gps'?`<button class="gbtn" data-a="mapme" aria-label="Recentrer sur moi">${ic('flag',16)}</button>`:''}</div>${ok?`<div class="gm7leg"><span><i class="lg-b"></i>Meilleur choix</span>${+S.prefs.gasAlert>0?'<span><i class="lg-a"></i>Sous ton alerte</span>':''}${G.loc&&G.loc.mode==='gps'?'<span><i class="lg-me"></i>Toi</span>':''}</div>`:`<div class="gm7ov">${G.status==='loading'||G.status==='locating'||G.status==='geocoding'?'<span class="spin"></span>Recherche des stations…':G.loc?'Aucune station à afficher':'Choisis ta position ou une ville : les stations apparaîtront ici avec leur prix.'}</div>`}</div>`}
+ return `<div class="gm7 ${G.mapBig?'big':''}"><div id="gmap"></div><div class="gm7s">${[['dark','Sombre'],['plan','Plan'],['sat','Satellite']].map(([k,l])=>`<button class="${(S.prefs.mapStyle||'dark')===k?'on':''}" data-a="mapstyle:${k}">${l}</button>`).join('')}</div><div class="gm7b"><button class="gbtn" data-a="mapbig" aria-label="${G.mapBig?'Réduire':'Agrandir'} la carte">${ic(G.mapBig?'down':'up',16)}</button>${G.loc&&G.loc.mode==='gps'?`<button class="gbtn" data-a="mapme" aria-label="Recentrer sur moi">${ic('flag',16)}</button>`:''}</div>${ok?`<div class="gm7leg"><span><i class="lg-b"></i>Meilleur choix</span>${+S.prefs.gasAlert>0?'<span><i class="lg-a"></i>Sous ton alerte</span>':''}${G.loc&&G.loc.mode==='gps'?'<span><i class="lg-me"></i>Toi</span>':''}</div>`:`<div class="gm7ov">${G.status==='loading'||G.status==='locating'||G.status==='geocoding'?'<span class="spin"></span>Recherche des stations…':G.loc?'Aucune station à afficher':'Choisis ta position ou une ville : les stations apparaîtront ici avec leur prix.'}</div>`}</div>`}
 function loadLeaflet(){if(window.L)return Promise.resolve();if(LEAF)return LEAF;LEAF=new Promise((ok,ko)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.appendChild(c);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';sc.onload=()=>ok();sc.onerror=()=>{LEAF=null;ko()};document.head.appendChild(sc)});return LEAF}
 async function initGasMap(){const el=$('#gmap');if(!el)return;
  try{await loadLeaflet()}catch(e){el.innerHTML=`<div class="gm7err">${ic('info',16)}Carte indisponible (pas de connexion). La liste ci-dessous reste à jour.</div>`;return}
  if(!$('#gmap')||el.dataset.on)return;el.dataset.on=1;if(G.map){try{G.map.remove()}catch(e){}}
  const R=G.status==='ok'?gasSorted().filter(x=>x.lat!=null):[],bp=bestPick(),a=+S.prefs.gasAlert,fl=FUELS.find(x=>x[0]===G.fuel)[1];
  const m=L.map(el,{zoomControl:false,attributionControl:true,tap:true});G.map=m;
- L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap · © CARTO'}).addTo(m);
+ const MS={dark:['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png','© OpenStreetMap · © CARTO',19],plan:['https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png','© OpenStreetMap · © CARTO',19],sat:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}','Imagerie © Esri, Maxar, Earthstar',19]},ms=MS[S.prefs.mapStyle]||MS.dark;
+ L.tileLayer(ms[0],{maxZoom:ms[2],subdomains:'abcd',attribution:ms[1]}).addTo(m);
+ if(S.prefs.mapStyle==='sat')L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd',pane:'overlayPane'}).addTo(m);
+ el.parentNode.classList.toggle('lt',S.prefs.mapStyle!=='dark');
  const pts=[];
  R.forEach(s=>{const best=bp&&bp.s.id===s.id,al=a>0&&s.price<=a;const ic_=L.divIcon({className:'',html:`<div class="pm7 ${best?'best':''} ${al?'al':''}"><b>${pf(s.price)}</b>${best?'<i>★</i>':''}</div>`,iconSize:[0,0],iconAnchor:[0,0]});
   const dest=`${s.lat},${s.lon}`;const mk=L.marker([s.lat,s.lon],{icon:ic_,zIndexOffset:best?1000:al?500:0}).addTo(m);
@@ -2049,6 +2054,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
   case 'gassort':G.sort=p1;break;
   case 'locate':locate();return;
   case 'gasrefresh':gasFetch();return;
+  case 'mapstyle':S.prefs.mapStyle=p1;scheduleSave();render();return;
   case 'mapbig':G.mapBig=!G.mapBig;render();return;
   case 'mapme':if(G.map&&G.loc&&G.loc.lat!=null){G.map.setView([G.loc.lat,G.loc.lon],14)}return;
   case 'gaschange':G.mapView=null;G.loc=null;G.status='idle';G.results=[];break;
