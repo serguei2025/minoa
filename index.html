@@ -1134,7 +1134,7 @@ const SC={
  events:{name:'un rendez-vous ou une échéance',f:[['title','Titre','text'],['type','Type','select',['Rendez-vous','Échéance']],['date','Date','date'],['time','Heure','time'],['cat','Catégorie','select',['Alternance','Cours','Perso']],['note','Note','textarea']]},
  money:{name:'une opération',f:[['kind','Type','select',['Dépense','Revenu']],['label','Libellé','text'],['amount','Montant (€)','number'],['date','Date','date'],['cat','Catégorie','select',['Courses','Logement','Transport','Voiture','Loisirs','Abonnements','Santé','Études','Salaire','Aides','Autre']]]},
  recur:{name:'une charge fixe ou un revenu régulier',f:[['kind','Type','select',['Dépense','Revenu']],['label','Libellé (ex. Loyer, Téléphone, Salaire)','text'],['amount','Montant (€)','number'],['day','Jour du mois où ça tombe (1 à 31)','number'],['cat','Catégorie','select',['Logement','Abonnements','Transport','Voiture','Courses','Loisirs','Santé','Études','Salaire','Aides','Autre']]]},
- receipts:{name:'un ticket ou une garantie',f:[['img','Photo du ticket ou de la facture','image'],['title','Produit (ex. Casque, Lave-linge)','text'],['store','Magasin','text'],['date','Date d’achat','date'],['amount','Prix payé (€)','number'],['warranty','Durée de la garantie','select',['2 ans (garantie légale)','1 an','6 mois','3 ans','5 ans','Aucune']],['note','Note (n° de série, contact SAV…)','textarea']]},
+ receipts:{name:'un ticket ou une garantie',f:[['img','Photo du ticket ou de la facture (Minoa le lit pour toi)','image'],['title','Produit (ex. Casque, Lave-linge)','text'],['store','Magasin','text'],['date','Date d’achat','date'],['amount','Prix payé (€)','number'],['warranty','Durée de la garantie','select',['2 ans (garantie légale)','1 an','6 mois','3 ans','5 ans','Aucune']],['note','Note (n° de série, contact SAV…)','textarea']]},
  mealIdeas:{name:'une recette',f:[['img','Photo du plat','image'],['title','Nom de la recette','text'],['time','Temps de préparation (ex. 30 min)','text'],['servings','Nombre de portions','text'],['ingredients','Ingrédients (un par ligne ou séparés par des virgules)','textarea'],['steps','Étapes de préparation (une par ligne)','textarea'],['note','Note','textarea']]},
  ideas:{name:'une idée ou un projet',f:[['title','Titre','text'],['desc','Description','textarea'],['cat','Catégorie','select',['Site web','Design','Logo','Appli','Autre']],['status','Statut','select',['Idée','À faire','En cours','Terminé']],['notes','Notes','textarea']]},
  portfolio:{name:'une réalisation',f:[['img','Image','image'],['title','Titre','text'],['cat','Catégorie','select',['Site web','Maquette','Logo','Identité visuelle','Illustration','Autre']],['date','Date','date'],['desc','Description','textarea'],['notes','Notes privées','textarea']]},
@@ -1783,12 +1783,58 @@ function parseFuelTicket(raw){
  return r}
 
 
+function parseReceipt(raw){
+ const T=String(raw||'').replace(/[‘’`]/g,"'");const lines=T.split(/\n+/).map(l=>l.trim()).filter(Boolean);const U=lines.map(l=>l.toUpperCase());
+ const amt=l=>[...l.matchAll(/(?<![\d,.])(\d{1,3}(?:[ .]\d{3})*|\d+)[,.](\d{2})(?![\d])/g)].map(m=>+(m[1].replace(/[ .]/g,'')+'.'+m[2]));
+ const r={};
+ // date (la plus plausible, pas dans le futur)
+ const now=new Date();for(const m of T.matchAll(/(\d{2})[\/.-](\d{2})[\/.-](\d{2,4})/g)){let[,d,mo,y]=m;if(y.length===2)y='20'+y;const dt=new Date(+y,+mo-1,+d);if(+mo>=1&&+mo<=12&&+d>=1&&+d<=31&&dt<=now&&+y>2000){r.date=`${y}-${mo}-${d}`;break}}
+ // total
+ const pri=[/NET\s*A\s*PAYER/,/TOTAL\s*PAY/,/TOTAL\s*TTC/,/MONTANT\s*TTC/,/TOTAL\b/,/A\s*PAYER/,/MONTANT/];
+ for(const re of pri){for(let i=0;i<U.length;i++){if(re.test(U[i])&&!/HT\b|TVA/.test(U[i].replace(/MONTANT TTC/,''))){let a=amt(lines[i]);if(!a.length)a=amt(lines[i+1]||'');if(!a.length&&/MONTANT\s*TTC/.test(U[i])){const n=amt(lines[i+1]||'');if(n.length)a=[n[n.length-1]]}if(a.length){r.price=Math.max(...a);break}}}if(r.price)break}
+ if(!r.price){const all=lines.flatMap(amt).filter(v=>v<100000);if(all.length)r.price=Math.max(...all)}
+ // magasin
+ const B=['FNAC','DARTY','BOULANGER','CARREFOUR','E.LECLERC','LECLERC','AUCHAN','IKEA','DECATHLON','APPLE','LEROY MERLIN','CASTORAMA','BRICO DEPOT','BOULANGER','CDISCOUNT','AMAZON','INTERSPORT','GO SPORT','SEPHORA','ZARA','H&M','PRIMARK','ACTION','CONFORAMA','BUT','MAISONS DU MONDE','GALERIES LAFAYETTE','PRINTEMPS','BON MARCHE','MONOPRIX','LIDL','ALDI','INTERMARCHE','SUPER U','HYPER U','CASINO','ORANGE','SFR','BOUYGUES','FREE','SAMSUNG','NORAUTO','FEU VERT','SPEEDY','MIDAS','KIABI','JD SPORTS','FOOT LOCKER','NIKE','ADIDAS','APPLE STORE','MICROMANIA','LDLC','GRAND OPTICAL','OPTIC 2000','AFFLELOU'];
+ const up=U.join('\n');const bm=B.find(b=>up.includes(b));if(bm)r.store=bm.replace(/\b\w+/g,w=>w[0]+w.slice(1).toLowerCase()).replace('E.leclerc','E.Leclerc').replace('H&m','H&M').replace('Ldlc','LDLC').replace('Sfr','SFR');
+ // produit : première ligne d'article avec un prix (hors total, TVA, paiement)
+ const skip=/TOTAL|TVA|\bHT\b|TTC|PAY|CB\b|CARTE|ESPECE|RENDU|MONTANT|REMISE|CAGNOTTE|CLIENT|MAGASIN|TRANSACTION|OPERATEUR|TICKET|EUROS|STATUT|SIRET|TEL\b/;
+ for(let i=0;i<lines.length;i++){if(skip.test(U[i]))continue;const a=amt(lines[i]);let txt=lines[i].replace(/(?<![\d,.])(\d{1,3}(?:[ .]\d{3})*|\d+)[,.]\d{2}(?!\d)/g,'').replace(/\b\d{6,}\b/g,'').replace(/[*€]/g,'').trim();
+  const nextA=amt(lines[i+1]||'');
+  if((a.length||/^\d{8,}/.test((lines[i+1]||'').trim().replace(/\s/g,'')))&&/[A-Za-zÀ-ÿ]{3}/.test(txt)){
+   txt=txt.split(/\s+/).filter((w,k)=>!(k===0&&/^[A-Z0-9]{2,3}$/.test(w)));{const o=[];for(const w of txt){if(/^[A-Za-zÀ-ÿ0-9'’-]{3,}$/.test(w)&&/[A-Za-zÀ-ÿ]/.test(w)||(o.length&&/^\d{1,3}$/.test(w)))o.push(w);else if(o.length)break}txt=o.join(' ')}
+   txt=txt.replace(/^[^A-Za-zÀ-ÿ]+/,'').replace(/^(?:[A-Z0-9]{1,3}\s+)+(?=[A-Za-zÀ-ÿ]{4})/,'');r.title=txt.toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase()).replace(/^\s+/,'');
+   const extra=[];for(let j=i+1;j<Math.min(lines.length,i+5);j++){if(skip.test(U[j])||amt(lines[j]).length&&j>i+1)break;const l=lines[j].trim();if(/^\d{6,}$/.test(l))continue;if(/[A-Za-z]{3}/.test(l)||/REF|S[ÉE]RIE|SN/i.test(l))extra.push(l)}
+   if(extra.length)r.note=extra.map(x=>x.replace(/[|“”"*—_]+/g,' ').replace(/^[\s'’.,:;-]+|[\s'’.,:;-]+$/g,'').replace(/\s{2,}/g,' ')).filter(Boolean).join(' · ');break}}
+ const sn=T.match(/(?:S[ÉEé]RIE|SERIAL|S\/N|N°\s*DE\s*S[ÉE]RIE)\s*:?\s*([A-Z0-9-]{4,})/i);if(sn&&!(r.note||'').includes(sn[1]))r.note=[r.note,'N° de série '+sn[1]].filter(Boolean).join(' · ');
+ return r}
+
+
+/* Prépare la photo pour la lecture : enlève le fond coloré (table, bois…), renforce le contraste, agrandit si besoin */
+function prepImg(file){return new Promise(ok=>{const u=URL.createObjectURL(file),im=new Image();im.onerror=()=>ok(file);im.onload=()=>{try{const M=Math.max(im.naturalWidth,im.naturalHeight),k=Math.min(2,Math.max(1,1000/M),2400/M);
+ const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);const x=c.getContext('2d');x.drawImage(im,0,0,c.width,c.height);
+ const d=x.getImageData(0,0,c.width,c.height),p=d.data,H=new Uint32Array(256),g=new Uint8Array(p.length/4),m=new Uint8Array(p.length/4);let n=0;
+ for(let i=0,j=0;i<p.length;i+=4,j++){const r=p[i],gg=p[i+1],b=p[i+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b),sat=mx?(mx-mn)/mx:0;g[j]=.299*r+.587*gg+.114*b;if(sat>.16)m[j]=1;else{H[g[j]]++;n++}}
+ const pc=q=>{let a=0;for(let v=0;v<256;v++){a+=H[v];if(a>=n*q)return v}return 255},lo=pc(.02),hi=Math.max(lo+20,pc(.6));
+ for(let i=0,j=0;i<p.length;i+=4,j++){const v=m[j]?255:Math.max(0,Math.min(255,(g[j]-lo)/(hi-lo)*255));p[i]=p[i+1]=p[i+2]=v}
+ x.putImageData(d,0,0);URL.revokeObjectURL(u);ok(c)}catch(e){ok(file)}};im.src=u})}
+async function ocrRead(file,parse,need){const w=await tessWorker();const c=await prepImg(file);let r=parse((await w.recognize(c)).data.text);
+ if(need(r)){const r2=parse((await w.recognize(file)).data.text);if(r2.sure&&!r.sure)r=r2;else Object.keys(r2).forEach(k=>{if(r[k]==null||r[k]==='')r[k]=r2[k]})}return r}
+async function readReceiptTicket(file){const o=$('#ocr7');if(!o)return;
+ if(navigator.onLine===false){o.innerHTML=`<div class="ocr7 err">${ic('info',15)}<span>Pas de connexion : la lecture du ticket a besoin d’Internet. La photo est gardée, remplis les champs à la main.</span></div>`;return}
+ o.innerHTML=`<div class="ocr7"><span class="spin"></span><span>Lecture du ticket…<small>Quelques secondes. La première fois, Minoa télécharge l’outil de lecture (quelques Mo).</small></span></div>`;
+ try{const r=await ocrRead(file,parseReceipt,r=>!r.price||!r.date||!r.title),f=$('[data-form=receipts]');if(!f||!$('#ocr7'))return;
+  const put=(k,v)=>{if(v!=null&&v!==''&&f.elements[k]&&(!f.elements[k].value||k==='date'||f.elements[k].dataset.ocr)){f.elements[k].value=typeof v==='number'?String(v).replace('.',','):v;f.elements[k].classList.add('ocrfill');f.elements[k].dataset.ocr=1}};
+  put('title',r.title);put('store',r.store);put('date',r.date);put('amount',r.price);put('note',r.note);
+  const got=[r.title&&'produit',r.store&&'magasin',r.date&&'date',r.price&&'prix',r.note&&'référence / n° de série'].filter(Boolean),miss=[!r.title&&'le produit',!r.store&&'le magasin',!r.date&&'la date',!r.price&&'le prix'].filter(Boolean);
+  $('#ocr7').innerHTML=got.length?`<div class="ocr7 ${miss.length?'warn':'ok'}">${ic(miss.length?'info':'tick',15)}<span><b>Ticket lu : ${got.join(', ')}</b><small>Vérifie les champs surlignés${miss.length?` et complète ${miss.join(', ')}`:''}.</small></span></div>`
+   :`<div class="ocr7 warn">${ic('info',15)}<span><b>Ticket illisible</b><small>Reprends la photo bien à plat, nette, éclairée et en entier, ou remplis les champs à la main.</small></span></div>`}
+ catch(e){const o2=$('#ocr7');if(o2)o2.innerHTML=`<div class="ocr7 err">${ic('info',15)}<span>La lecture du ticket n’a pas pu démarrer${window.self!==window.top?' dans Claude':''}. La photo est gardée : remplis les champs à la main.</span></div>`}}
 let TESS=null;
 function tessWorker(){if(TESS)return TESS;TESS=new Promise((ok,ko)=>{const go=()=>window.Tesseract.createWorker('fra',1).then(ok,ko);if(window.Tesseract)return go();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=go;sc.onerror=()=>ko(new Error('script'));document.head.appendChild(sc)}).catch(e=>{TESS=null;throw e});return TESS}
 async function readFuelTicket(file){const o=$('#ocr7');if(!o)return;
  if(navigator.onLine===false){o.innerHTML=`<div class="ocr7 err">${ic('info',15)}<span>Pas de connexion : la lecture du ticket a besoin d’Internet. La photo est gardée, remplis les champs à la main.</span></div>`;return}
  o.innerHTML=`<div class="ocr7"><span class="spin"></span><span>Lecture du ticket…<small>La première fois, Minoa télécharge l’outil de lecture (quelques Mo).</small></span></div>`;
- try{const w=await tessWorker(),{data}=await w.recognize(file),r=parseFuelTicket(data.text),f=$('[data-form=fuel]');if(!f||!$('#ocr7'))return;
+ try{const r=await ocrRead(file,parseFuelTicket,r=>!r.sure),f=$('[data-form=fuel]');if(!f||!$('#ocr7'))return;
   const put=(k,v)=>{if(v!=null&&v!==''&&f.elements[k]){f.elements[k].value=typeof v==='number'?String(v).replace('.',','):v;f.elements[k].classList.add('ocrfill')}};
   if(r.date)put('date',r.date);if(r.litres)put('litres',r.litres);if(r.price)put('price',r.price);if(r.station&&!f.elements.station.value)put('station',r.station);
   const got=[r.litres&&'litres',r.price&&'prix',r.date&&'date'].filter(Boolean);
@@ -1805,6 +1851,7 @@ function fuelCalc(){const f=$('[data-form=fuel]'),o=$('#fcalc');if(!f||!o)return
 let pendingImg=null;
 /* Réduit la photo (1400 px max, JPEG) pour ne pas saturer le stockage de l'appareil. */
 function shrinkImg(file){return new Promise((ok,ko)=>{const r=new FileReader();r.onerror=ko;r.onload=()=>{const im=new Image();im.onerror=ko;im.onload=()=>{try{const M=1400,k=Math.min(1,M/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const u=c.toDataURL('image/jpeg',.82);ok(u.length<r.result.length?u:r.result)}catch(e){ok(r.result)}};im.src=r.result};r.readAsDataURL(file)})}
+function rcFormExtras(){const f=$('[data-form=receipts]');if(!f)return;const w=f.querySelector('.fimgw');if(w&&!$('#ocr7')){const d=document.createElement('div');d.id='ocr7';w.after(d)}}
 function fuelFormExtras(){const f=$('[data-form=fuel]');if(!f)return;const w=f.querySelector('.fimgw');if(w){const d=document.createElement('div');d.id='ocr7';w.after(d)}const pl=f.elements.price.closest('label'),c=document.createElement('div');c.id='fcalc';c.className='fcalc';pl.after(c);fuelCalc()}
 function openForm(coll,id,pre){const sc=SC[coll],it=id?S[coll].find(x=>x.id===id):{date:coll==='events'&&U.calSel?U.calSel:today,...(DEF[coll]||{}),...(pre||{})};if(!it)return;
  if(coll==='carDue'&&!id)it.date='';
@@ -1816,7 +1863,7 @@ function openForm(coll,id,pre){const sc=SC[coll],it=id?S[coll].find(x=>x.id===id
   else if(t==='image')i=`<div id="imgPrev">${v?`<img src="${v}" alt="" class="imgprev">`:''}</div><div class="imgact"><label class="btn ghost imgpick">${ic('image',16)}<span id="imgLbl">${v?'Changer la photo':'Ajouter une photo'}</span><input type="file" accept="image/*" data-img="1" class="vh"></label><button type="button" class="btn ghost imgclr" data-a="imgclr" ${v?'':'hidden'}>Retirer</button></div>`;
   else i=`<input name="${k}" type="${t==='number'?'text':t}" ${t==='number'?'inputmode="decimal"':''} value="${esc(v)}">`;
   return t==='image'?`<div class="f fimgw"><span>${l}</span>${i}</div>`:`<label class="f"><span>${l}</span>${i}</label>`}).join('');
- if(coll==='fuel')setTimeout(fuelFormExtras,0);sheet(`<h3>${id?'Modifier':'Ajouter'} ${sc.name}${closeBtn}</h3><form data-form="${coll}" data-id="${id||''}">${fl}<div class="actions">${id?`<button type="button" class="btn danger" data-a="del:${coll}:${id}">Supprimer</button>`:''}<button class="btn">Enregistrer</button></div></form>`)}
+ if(coll==='fuel')setTimeout(fuelFormExtras,0);if(coll==='receipts')setTimeout(rcFormExtras,0);sheet(`<h3>${id?'Modifier':'Ajouter'} ${sc.name}${closeBtn}</h3><form data-form="${coll}" data-id="${id||''}">${fl}<div class="actions">${id?`<button type="button" class="btn danger" data-a="del:${coll}:${id}">Supprimer</button>`:''}<button class="btn">Enregistrer</button></div></form>`)}
 function openSlot(key){const m=S.plan[key]||{title:'',ingredients:''},[d,mo]=key.split('|');
  sheet(`<h3>${fmtD(d)} · ${mo==='midi'?'midi':'soir'}${closeBtn}</h3>${S.mealIdeas.length?`<label class="f"><span>Choisir parmi mes idées</span><select data-pick="1"><option value="">—</option>${S.mealIdeas.map(i=>`<option value="${i.id}">${esc(i.title)}</option>`).join('')}</select></label>`:''}<form data-slot="${key}"><label class="f"><span>Repas</span><input name="title" value="${esc(m.title)}"></label><label class="f"><span>Ingrédients (séparés par des virgules)</span><textarea name="ingredients">${esc(m.ingredients)}</textarea></label><label style="display:flex;gap:10px;align-items:center;margin-bottom:14px;font-size:14px"><input type="checkbox" name="toshop" style="width:22px;min-height:22px;accent-color:var(--acc)">Ajouter les ingrédients à ma liste de courses</label><div class="actions">${S.plan[key]?`<button type="button" class="btn danger" data-a="slotdel:${key}">Retirer</button>`:''}<button class="btn">Enregistrer</button></div></form>`)}
 function addToShop(str){const have=new Set(S.shop.filter(x=>!x.done).map(x=>x.name.toLowerCase()));let n=0;
@@ -1932,7 +1979,7 @@ document.addEventListener('change',e=>{const t=e.target;
  if(t.dataset.radius){G.radius=+t.value;if(G.loc&&G.loc.lat!=null)gasFetch()}
  if(t.dataset.pick){const i=S.mealIdeas.find(x=>x.id===t.value);if(i){const f=$('[data-slot]');f.elements.title.value=i.title;f.elements.ingredients.value=i.ingredients||''}}
  if(t.dataset.img&&t.files[0]){const file=t.files[0];$('#imgLbl').textContent='Préparation de la photo…';
-  shrinkImg(file).then(u=>{pendingImg=u;$('#imgPrev').innerHTML=`<img src="${u}" alt="" class="imgprev">`;$('#imgLbl').textContent='Changer la photo';const c=$('.imgclr');if(c)c.hidden=false;if(t.closest('[data-form=fuel]'))readFuelTicket(file)})
+  shrinkImg(file).then(u=>{pendingImg=u;$('#imgPrev').innerHTML=`<img src="${u}" alt="" class="imgprev">`;$('#imgLbl').textContent='Changer la photo';const c=$('.imgclr');if(c)c.hidden=false;if(t.closest('[data-form=fuel]'))readFuelTicket(file);else if(t.closest('[data-form=receipts]'))readReceiptTicket(file)})
   .catch(()=>{$('#imgLbl').textContent='Ajouter une photo';toast('Impossible de lire cette image, essaie une autre photo')})}});
 document.querySelectorAll('nav.tabs button').forEach(b=>b.insertAdjacentHTML('afterbegin',ic(b.dataset.ic,23)));
 
@@ -2033,6 +2080,7 @@ document.addEventListener('change',e=>{if(e.target.id==='importf'){readImport(e.
 document.addEventListener('input',e=>{const t=e.target,f=t.form;if(!f)return;
  if(f.dataset.simu)simuCalc();
  if(f.dataset.form==='fuel'){t.classList.remove('ocrfill');fuelCalc()}
+ if(f.dataset.form==='receipts'){t.classList.remove('ocrfill');delete t.dataset.ocr}
  if(f.dataset.hourly){const n=v=>+String(v||'').replace(',','.').replace(/\s/g,''),m=n(f.elements.m.value),h=n(f.elements.h.value)||35,o=$('#hwcalc');if(o)o.textContent=m>0?`Soit environ ${eur(m/(h*52/12))} net de l’heure.`:''}
  if(f.dataset.form==='money'&&t.name==='amount'){let o=f.querySelector('.hwl');if(!o){o=document.createElement('p');o.className='hwl';t.closest('label').after(o)}const v=+String(t.value||'').replace(',','.').replace(/\s/g,''),h=hw(v);o.innerHTML=h&&f.elements.kind.value==='Dépense'?`${ic('hour',13)}Soit <b>${h}</b> de travail`:''}});
 render();boot();
