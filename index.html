@@ -1051,6 +1051,11 @@ html.splash,html.splash body{background:#172131!important}
 .sim7>b{display:block;font:800 16px Manrope,-apple-system,sans-serif;margin-bottom:6px;color:#8fd3c8}.sim7.warn>b{color:#f2cd7e}.sim7.bad>b{color:#f08c80}.sim7.na>b{color:#eef3f8}
 .sim7>div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-top:1px solid rgba(255,255,255,.07);font-size:13px}.sim7>div span{color:#a3b2c4}.sim7>div b{color:#eef3f8;text-align:right}.sim7 em{font-style:normal;color:#eef3f8}.sim7 em.neg{color:#f08c80}.sim7 p{margin:8px 0 0;font-size:12.5px;color:#a3b2c4}
 .sim0{font-size:13px;color:#a3b2c4;padding:8px 2px 12px}
+
+.ocr7{display:flex;gap:10px;align-items:flex-start;border-radius:14px;padding:11px 13px;margin:-2px 0 12px;background:var(--card);border:1px solid rgba(255,255,255,.1);font-size:13px;color:#c3cedb}.ocr7>svg,.ocr7 .spin{flex:none;margin-top:2px}.ocr7 b{display:block;color:#eef3f8;font-size:14px}.ocr7 small{display:block;color:#a3b2c4;font-size:12px;margin-top:3px}
+.ocr7.ok{background:rgba(95,179,168,.12);border-color:rgba(95,179,168,.4)}.ocr7.ok>svg{color:#8fd3c8}.ocr7.warn{background:rgba(242,205,126,.1);border-color:rgba(242,205,126,.4)}.ocr7.warn>svg{color:#f2cd7e}.ocr7.err{background:rgba(240,140,128,.1);border-color:rgba(240,140,128,.35)}
+.ocrfill{border-color:#8fd3c8!important;box-shadow:0 0 0 3px rgba(95,179,168,.18)}
+.fcalc{display:grid;gap:4px;margin:-4px 2px 12px;font-size:13px;color:#a3b2c4}.fcalc:empty{display:none}.fcalc b{color:#e9b98f}
 </style>
 </head>
 <body>
@@ -1133,7 +1138,7 @@ const SC={
  mealIdeas:{name:'une recette',f:[['img','Photo du plat','image'],['title','Nom de la recette','text'],['time','Temps de préparation (ex. 30 min)','text'],['servings','Nombre de portions','text'],['ingredients','Ingrédients (un par ligne ou séparés par des virgules)','textarea'],['steps','Étapes de préparation (une par ligne)','textarea'],['note','Note','textarea']]},
  ideas:{name:'une idée ou un projet',f:[['title','Titre','text'],['desc','Description','textarea'],['cat','Catégorie','select',['Site web','Design','Logo','Appli','Autre']],['status','Statut','select',['Idée','À faire','En cours','Terminé']],['notes','Notes','textarea']]},
  portfolio:{name:'une réalisation',f:[['img','Image','image'],['title','Titre','text'],['cat','Catégorie','select',['Site web','Maquette','Logo','Identité visuelle','Illustration','Autre']],['date','Date','date'],['desc','Description','textarea'],['notes','Notes privées','textarea']]},
- fuel:{name:'un plein',f:[['date','Date','date'],['km','Kilométrage au compteur','number'],['litres','Litres','number'],['price','Prix payé (€)','number'],['station','Station','text']]},
+ fuel:{name:'un plein',f:[['img','Photo du ticket (Minoa le lit pour toi)','image'],['date','Date','date'],['km','Kilométrage au compteur','number'],['litres','Litres','number'],['price','Prix payé (€)','number'],['station','Station','text']]},
  carCosts:{name:'un frais ou entretien',f:[['type','Type','select',['Entretien','Réparation','Assurance','Contrôle technique','Péage / parking','Autre']],['label','Détail','text'],['amount','Montant (€)','number'],['date','Date','date'],['km','Kilométrage (facultatif)','number']]},
  carDue:{name:'un rappel véhicule',f:[['kind','Type','select',['Révision','Contrôle technique','Assurance','Pneus','Vidange','Autre']],['title','Intitulé','text'],['date','Date limite','date'],['km','Ou à (km)','number'],['note','Note','textarea']]},
  journal:{name:'une entrée du carnet',f:[['date','Date','date'],['theme','Thème','select',['Projet client','Design','Développement','Réunion','Formation','Autre']],['mission','Missions du jour','textarea'],['skills','Compétences apprises','textarea'],['wins','Réalisations / fiertés','textarea']]}
@@ -1752,9 +1757,55 @@ function openRecipe(id){const m=S.mealIdeas.find(x=>x.id===id);if(!m)return;cons
  <div class="rcv-s"><b>Préparation</b>${st.length?`<ol>${st.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`:'<p class="sub">Aucune étape notée. Touche « Modifier » pour les ajouter.</p>'}</div>
  ${m.note?`<div class="rcv-s"><b>Note</b><p>${esc(m.note).replace(/\n/g,'<br>')}</p></div>`:''}
  <div class="rcv-a"><button class="btn" data-a="planidea:${m.id}">${ic('plus',16)}Planifier</button>${ing.length?`<button class="btn ghost" data-a="ideashop:${m.id}">${ic('cart',16)}Aux courses</button>`:''}<button class="btn ghost" data-a="edit:mealIdeas:${m.id}">${ic('pen',16)}Modifier</button></div></div>`)}
+/* ===== Lecture des tickets de carburant (OCR, sur l'appareil) ===== */
+function parseFuelTicket(raw){
+ const T=String(raw||'').toUpperCase().replace(/[‘’`']/g,"'").replace(/O(?=\d)|(?<=\d)O/g,'0').replace(/(?<=\d)\s*[,.]\s*(?=\d)/g,'.');
+ const lines=T.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+ const nums=l=>[...l.matchAll(/(?<![\d.])(\d{1,4}\.\d{2,3})(?![\d.])/g)].map(m=>({v:+m[1],d:m[1].split('.')[1].length}));
+ const C={ppl:[],lit:[],tot:[]};
+ lines.forEach((l,i)=>{const ns=nums(l),nx=nums(lines[i+1]||'');
+  ns.forEach(n=>{
+   if(n.v>=.8&&n.v<=3.5&&(n.d===3||/€\s*\/\s*L|EUR\s*\/\s*L|\/L\b|PRIX|P\.?U|UNIT/.test(l)))C.ppl.push(n.v);
+   if(n.v>=2&&n.v<=150&&(/\d\s*L\b|LITRE|VOLUME|QT|QUANT|VOL\b/.test(l)))C.lit.push(n.v);
+   if(n.v>=3&&n.v<=400&&/TOTAL|MONTANT|TTC|A PAYER|PAYE|DEBIT|CB|CARTE|EUR|€/.test(l))C.tot.push(n.v)});
+  if(/TOTAL|MONTANT|A PAYER/.test(l)&&!ns.length)nx.forEach(n=>{if(n.v>=3&&n.v<=400)C.tot.push(n.v)})});
+ const all=lines.flatMap(nums).map(n=>n.v);
+ let best=null;
+ const P=[...new Set(C.ppl.length?C.ppl:all.filter(v=>v>=.8&&v<=3.5))],Lc=[...new Set(C.lit.length?C.lit:all.filter(v=>v>=2&&v<=150))],Tc=[...new Set(C.tot.length?C.tot:all.filter(v=>v>=3&&v<=400))];
+ P.forEach(p=>Lc.forEach(L=>{if(L===p)return;Tc.forEach(t=>{const e=Math.abs(L*p-t);if(e<=Math.max(.06,t*.012)&&(!best||e<best.e))best={p,L,t,e}})}));
+ let r={};
+ if(best)r={ppl:best.p,litres:best.L,price:best.t,sure:true};
+ else{const p=C.ppl[0],L=C.lit[0],t=C.tot.length?Math.max(...C.tot):undefined;r={ppl:p,litres:L,price:t,sure:false};
+  if(!r.price&&p&&L)r.price=Math.round(p*L*100)/100;if(!r.litres&&p&&t)r.litres=Math.round(t/p*100)/100;if(!r.ppl&&L&&t)r.ppl=Math.round(t/L*1000)/1000}
+ const dm=T.match(/(\d{2})[\/.-](\d{2})[\/.-](\d{2,4})/);if(dm){let[,d,m,y]=dm;if(y.length===2)y='20'+y;if(+m>=1&&+m<=12&&+d>=1&&+d<=31)r.date=`${y}-${m}-${d}`}
+ const fm=T.match(/SP\s?95[\s-]?E\s?10|\bE10\b|SP\s?98|SP\s?95|GAZOLE|GASOIL|DIESEL|\bB7\b|E85|GPL/);if(fm)r.fuel=fm[0].replace(/\s/g,'');
+ const bm=T.match(/TOTAL\s?ENERGIES|TOTALENERGIES|ESSO|\bBP\b|SHELL|AVIA|INTERMARCH[EÉ]|E\.?\s?LECLERC|LECLERC|CARREFOUR|AUCHAN|SUPER\s?U|SYST[EÈ]ME\s?U|CASINO|DYNEFF|AGIP|ENI\b|NETTO|GEANT/);if(bm)r.station=bm[0].replace(/\s+/g,' ').replace(/^TOTALENERGIES|^TOTAL ENERGIES/,'TotalEnergies');
+ return r}
+
+
+let TESS=null;
+function tessWorker(){if(TESS)return TESS;TESS=new Promise((ok,ko)=>{const go=()=>window.Tesseract.createWorker('fra',1).then(ok,ko);if(window.Tesseract)return go();const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';sc.onload=go;sc.onerror=()=>ko(new Error('script'));document.head.appendChild(sc)}).catch(e=>{TESS=null;throw e});return TESS}
+async function readFuelTicket(file){const o=$('#ocr7');if(!o)return;
+ if(navigator.onLine===false){o.innerHTML=`<div class="ocr7 err">${ic('info',15)}<span>Pas de connexion : la lecture du ticket a besoin d’Internet. La photo est gardée, remplis les champs à la main.</span></div>`;return}
+ o.innerHTML=`<div class="ocr7"><span class="spin"></span><span>Lecture du ticket…<small>La première fois, Minoa télécharge l’outil de lecture (quelques Mo).</small></span></div>`;
+ try{const w=await tessWorker(),{data}=await w.recognize(file),r=parseFuelTicket(data.text),f=$('[data-form=fuel]');if(!f||!$('#ocr7'))return;
+  const put=(k,v)=>{if(v!=null&&v!==''&&f.elements[k]){f.elements[k].value=typeof v==='number'?String(v).replace('.',','):v;f.elements[k].classList.add('ocrfill')}};
+  if(r.date)put('date',r.date);if(r.litres)put('litres',r.litres);if(r.price)put('price',r.price);if(r.station&&!f.elements.station.value)put('station',r.station);
+  const got=[r.litres&&'litres',r.price&&'prix',r.date&&'date'].filter(Boolean);
+  $('#ocr7').innerHTML=got.length?`<div class="ocr7 ${r.sure?'ok':'warn'}">${ic(r.sure?'tick':'info',15)}<span><b>${r.sure?'Ticket lu et vérifié':'Ticket lu en partie'}</b>${r.litres&&r.ppl&&r.price?`${String(r.litres).replace('.',',')} L × ${pf(r.ppl)} €/L = ${eur(r.price)}${r.sure?' · les chiffres concordent':''}`:''}<small>${r.sure?'Vérifie quand même, puis ajoute le kilométrage.':'Vérifie les champs surlignés et complète ce qui manque.'}${r.fuel&&S.car&&S.car.fuelType&&!r.fuel.replace(/[-\s]/g,'').includes(({e10:'E10',sp98:'SP98',sp95:'SP95',gazole:'GAZOLE',e85:'E85',gplc:'GPL'})[S.car.fuelType]||'§')?` Carburant lu : ${r.fuel}.`:''}</small></span></div>`
+   :`<div class="ocr7 warn">${ic('info',15)}<span><b>Ticket illisible</b><small>Reprends la photo bien à plat, nette et éclairée, ou remplis les champs à la main.</small></span></div>`;
+  fuelCalc()}
+ catch(e){const o2=$('#ocr7');if(o2)o2.innerHTML=`<div class="ocr7 err">${ic('info',15)}<span>La lecture du ticket n’a pas pu démarrer${window.self!==window.top?' dans Claude':''}. La photo est gardée : remplis les champs à la main.</span></div>`}}
+function fuelCalc(){const f=$('[data-form=fuel]'),o=$('#fcalc');if(!f||!o)return;const n=k=>+String(f.elements[k].value||'').replace(',','.').replace(/\s/g,'');const L=n('litres'),p=n('price'),km=n('km');const out=[];
+ if(L>0&&p>0)out.push(`Prix au litre : <b>${pf(p/L)} €/L</b>`);
+ const id=f.dataset.id,prev=S.fuel.filter(x=>x.id!==id&&+x.km&&+x.km<km).sort((a,b)=>b.km-a.km)[0];
+ if(km>0&&prev){const D=km-prev.km;out.push(`Depuis le plein précédent : <b>${num(D)} km</b>`);if(L>0&&D>30)out.push(`Consommation : <b>${(L/D*100).toFixed(1).replace('.',',')} L/100 km</b>`);if(p>0&&D>30)out.push(`Coût : <b>${(p/D*100).toFixed(2).replace('.',',')} € aux 100 km</b>`)}
+ const h=hw(p);if(h)out.push(`Soit <b>${h}</b> de travail`);
+ o.innerHTML=out.map(x=>`<span>${x}</span>`).join('')}
 let pendingImg=null;
 /* Réduit la photo (1400 px max, JPEG) pour ne pas saturer le stockage de l'appareil. */
 function shrinkImg(file){return new Promise((ok,ko)=>{const r=new FileReader();r.onerror=ko;r.onload=()=>{const im=new Image();im.onerror=ko;im.onload=()=>{try{const M=1400,k=Math.min(1,M/Math.max(im.naturalWidth,im.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const u=c.toDataURL('image/jpeg',.82);ok(u.length<r.result.length?u:r.result)}catch(e){ok(r.result)}};im.src=r.result};r.readAsDataURL(file)})}
+function fuelFormExtras(){const f=$('[data-form=fuel]');if(!f)return;const w=f.querySelector('.fimgw');if(w){const d=document.createElement('div');d.id='ocr7';w.after(d)}const pl=f.elements.price.closest('label'),c=document.createElement('div');c.id='fcalc';c.className='fcalc';pl.after(c);fuelCalc()}
 function openForm(coll,id,pre){const sc=SC[coll],it=id?S[coll].find(x=>x.id===id):{date:coll==='events'&&U.calSel?U.calSel:today,...(DEF[coll]||{}),...(pre||{})};if(!it)return;
  if(coll==='carDue'&&!id)it.date='';
  if(coll==='money'&&!id&&U.moneyM!==ym)it.date=U.moneyM+'-01';
@@ -1765,7 +1816,7 @@ function openForm(coll,id,pre){const sc=SC[coll],it=id?S[coll].find(x=>x.id===id
   else if(t==='image')i=`<div id="imgPrev">${v?`<img src="${v}" alt="" class="imgprev">`:''}</div><div class="imgact"><label class="btn ghost imgpick">${ic('image',16)}<span id="imgLbl">${v?'Changer la photo':'Ajouter une photo'}</span><input type="file" accept="image/*" data-img="1" class="vh"></label><button type="button" class="btn ghost imgclr" data-a="imgclr" ${v?'':'hidden'}>Retirer</button></div>`;
   else i=`<input name="${k}" type="${t==='number'?'text':t}" ${t==='number'?'inputmode="decimal"':''} value="${esc(v)}">`;
   return t==='image'?`<div class="f fimgw"><span>${l}</span>${i}</div>`:`<label class="f"><span>${l}</span>${i}</label>`}).join('');
- sheet(`<h3>${id?'Modifier':'Ajouter'} ${sc.name}${closeBtn}</h3><form data-form="${coll}" data-id="${id||''}">${fl}<div class="actions">${id?`<button type="button" class="btn danger" data-a="del:${coll}:${id}">Supprimer</button>`:''}<button class="btn">Enregistrer</button></div></form>`)}
+ if(coll==='fuel')setTimeout(fuelFormExtras,0);sheet(`<h3>${id?'Modifier':'Ajouter'} ${sc.name}${closeBtn}</h3><form data-form="${coll}" data-id="${id||''}">${fl}<div class="actions">${id?`<button type="button" class="btn danger" data-a="del:${coll}:${id}">Supprimer</button>`:''}<button class="btn">Enregistrer</button></div></form>`)}
 function openSlot(key){const m=S.plan[key]||{title:'',ingredients:''},[d,mo]=key.split('|');
  sheet(`<h3>${fmtD(d)} · ${mo==='midi'?'midi':'soir'}${closeBtn}</h3>${S.mealIdeas.length?`<label class="f"><span>Choisir parmi mes idées</span><select data-pick="1"><option value="">—</option>${S.mealIdeas.map(i=>`<option value="${i.id}">${esc(i.title)}</option>`).join('')}</select></label>`:''}<form data-slot="${key}"><label class="f"><span>Repas</span><input name="title" value="${esc(m.title)}"></label><label class="f"><span>Ingrédients (séparés par des virgules)</span><textarea name="ingredients">${esc(m.ingredients)}</textarea></label><label style="display:flex;gap:10px;align-items:center;margin-bottom:14px;font-size:14px"><input type="checkbox" name="toshop" style="width:22px;min-height:22px;accent-color:var(--acc)">Ajouter les ingrédients à ma liste de courses</label><div class="actions">${S.plan[key]?`<button type="button" class="btn danger" data-a="slotdel:${key}">Retirer</button>`:''}<button class="btn">Enregistrer</button></div></form>`)}
 function addToShop(str){const have=new Set(S.shop.filter(x=>!x.done).map(x=>x.name.toLowerCase()));let n=0;
@@ -1881,7 +1932,7 @@ document.addEventListener('change',e=>{const t=e.target;
  if(t.dataset.radius){G.radius=+t.value;if(G.loc&&G.loc.lat!=null)gasFetch()}
  if(t.dataset.pick){const i=S.mealIdeas.find(x=>x.id===t.value);if(i){const f=$('[data-slot]');f.elements.title.value=i.title;f.elements.ingredients.value=i.ingredients||''}}
  if(t.dataset.img&&t.files[0]){const file=t.files[0];$('#imgLbl').textContent='Préparation de la photo…';
-  shrinkImg(file).then(u=>{pendingImg=u;$('#imgPrev').innerHTML=`<img src="${u}" alt="" class="imgprev">`;$('#imgLbl').textContent='Changer la photo';const c=$('.imgclr');if(c)c.hidden=false})
+  shrinkImg(file).then(u=>{pendingImg=u;$('#imgPrev').innerHTML=`<img src="${u}" alt="" class="imgprev">`;$('#imgLbl').textContent='Changer la photo';const c=$('.imgclr');if(c)c.hidden=false;if(t.closest('[data-form=fuel]'))readFuelTicket(file)})
   .catch(()=>{$('#imgLbl').textContent='Ajouter une photo';toast('Impossible de lire cette image, essaie une autre photo')})}});
 document.querySelectorAll('nav.tabs button').forEach(b=>b.insertAdjacentHTML('afterbegin',ic(b.dataset.ic,23)));
 
@@ -1981,6 +2032,7 @@ document.addEventListener('change',e=>{if(e.target.id==='importf'){readImport(e.
 
 document.addEventListener('input',e=>{const t=e.target,f=t.form;if(!f)return;
  if(f.dataset.simu)simuCalc();
+ if(f.dataset.form==='fuel'){t.classList.remove('ocrfill');fuelCalc()}
  if(f.dataset.hourly){const n=v=>+String(v||'').replace(',','.').replace(/\s/g,''),m=n(f.elements.m.value),h=n(f.elements.h.value)||35,o=$('#hwcalc');if(o)o.textContent=m>0?`Soit environ ${eur(m/(h*52/12))} net de l’heure.`:''}
  if(f.dataset.form==='money'&&t.name==='amount'){let o=f.querySelector('.hwl');if(!o){o=document.createElement('p');o.className='hwl';t.closest('label').after(o)}const v=+String(t.value||'').replace(',','.').replace(/\s/g,''),h=hw(v);o.innerHTML=h&&f.elements.kind.value==='Dépense'?`${ic('hour',13)}Soit <b>${h}</b> de travail`:''}});
 render();boot();
