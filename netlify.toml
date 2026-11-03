@@ -1,0 +1,35 @@
+# Minoa — réglages Netlify
+# Le projet est déjà prêt à être publié tel quel : pas de compilation.
+[build]
+  publish = "."
+  command = ""
+
+# Le service worker et la page doivent toujours être vérifiés auprès du serveur,
+# pour que les mises à jour de Minoa arrivent sur l'iPhone.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

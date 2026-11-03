@@ -1,0 +1,39 @@
+{
+  "name": "Minoa",
+  "short_name": "Minoa",
+  "description": "Tout ton quotidien, au même endroit : tâches, agenda, budget, repas, projets, voiture et carnet d’alternance.",
+  "lang": "fr",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a111d",
+  "theme_color": "#0a111d",
+  "categories": [
+    "productivity",
+    "lifestyle",
+    "finance"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
