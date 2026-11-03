@@ -1517,7 +1517,7 @@ car(){const c=S.car,kmItems=[...S.fuel,...S.carCosts].filter(x=>+x.km);
  if(nd)b+=`<button class="nextd" data-a="edit:carDue:${nd.id}"><span class="nd-d"><b>${toD(nd.date).getDate()}</b><small>${toD(nd.date).toLocaleDateString('fr-FR',{month:'short'}).replace('.','')}</small></span><div class="grow"><small>Prochaine échéance</small><b>${esc(nd.title)}</b></div><span class="nd-r">${rel(nd.date)}</span></button>`;
  const fl=FUELS.find(x=>x[0]===G.fuel)[1],lp=ppl(lastF);
  b+=`<button class="stcard" data-a="tab:gas"><span class="stc-i">${ic('flag',20)}</span><div class="grow"><b>Stations autour de moi</b><span>${fl}${c.fuelType?' · carburant de ma voiture':''} · prix officiels, itinéraires${(S.gasFav||[]).length?` · ${S.gasFav.length} favori${S.gasFav.length>1?'s':''}`:''}</span></div>${ic('right',18)}</button>`;
- b+=`<div class="cbar"><div class="cb-l"><small>${lp?'Dernier plein':'Carburant'}</small><b>${lp?p3(lp)+' €/L':fl}</b></div><a class="cb-b" href="https://www.prix-carburants.gouv.fr/" target="_blank" rel="noopener">${ic('fuel',18)}Prix carburants${ic('right',16)}</a></div>`;
+ b+=`<div class="cbar"><div class="cb-l"><small>${lastF&&lastF.date?`Dernier plein · ${(n=>n<=0?'aujourd’hui':n===1?'hier':`il y a ${n} j`)(-daysTo(lastF.date))}`:'Carburant · '+fl}</small><b>${lastF?[lp?p3(lp)+' €/L':'',lastF.litres?String(lastF.litres).replace('.',',')+' L':''].filter(Boolean).join(' · ')||eur(lastF.price):'Aucun plein noté'}</b></div><button class="cb-b" data-a="add:fuel">${ic('fuel',18)}J’ai fait le plein</button></div>`;
  /* détails */
  b+=`<div style="height:18px"></div>`+seg('carSeg',[['fuel','Pleins'],['costs','Dépenses'],['docs','Entretien']]);
  const seg1=['fuel','costs','docs'].includes(U.carSeg)?U.carSeg:'fuel';
